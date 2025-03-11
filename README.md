@@ -1,6 +1,6 @@
 # SF3: 2nd Impact Combo Trials
 
-This script is designed for use with **Street Fighter III: 2nd Impact** to provide a robust and interactive training menu. It allows players to select characters, trials, and dynamically load savestates for combo practice, all while offering an intuitive and visually appealing UI.
+This script is designed for use with **Street Fighter III: 2nd Impact** to provide a robust and interactive training menu. It allows players to select characters, trials, and dynamically load savestates.
 
 ## Features
 - **Interactive Character and Trial Selection**:
