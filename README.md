@@ -86,4 +86,8 @@ Feel free to tweak the following:
    - Improve the UI layout for better readability and add more advanced visual features, like animated transitions between menu states. add custom music & graphics.
 
 ## Contribution
-Contributions to improve this script are welcome! Whether it's enhancing the UI, optimizing the code, or adding new features, feel free to share your updates.
+Contributions to improve this script are welcome!
+
+## License
+This project is licensed under the "Do Whatever the Fuck You Want" License. You are free to use, modify, distribute, or do whatever you want with this project, no strings attached.
+
