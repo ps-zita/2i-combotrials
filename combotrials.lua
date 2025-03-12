@@ -253,35 +253,102 @@ function handleStartButton()
     end
 end
 
--- Variable to track if a hit has occurred during the current button press
-local hitConfirmed = false  
+-- All Moves Alex Has (stored in variables, not displayed)
+local alexHPFlashChop = {name = "HEAVY FLASH CHOP", address = 102385716}
+local alexMP = {name = "MEDIUM PUNCH", address = 102349208}
+local alexLP = {name = "LIGHT PUNCH", address = 102348968}
+local alexBackdropBomb = {name = "BACKDROP BOMB", address = 102388756}
+local alexHP = {name = "HEAVY PUNCH", address = 102349210}
+local alexLPFlashChop = {name = "LIGHT FLASH CHOP", address = 102384844}
+local alexExFlashChop = {name = "EX FLASH CHOP", address = 102349216}
+local alexForwardMP = {name = "FORWARD MEDIUM PUNCH", address = 102349217}
+local alexForwardHP = {name = "FORWARD HEAVY PUNCH", address = 102349218}
+local alexHeadbutt = {name = "HEADBUTT", address = 102349219}
+local alexFlyingCrossChop = {name = "FLYING CROSS CHOP", address = 102349220}
+local alexSleeperHold = {name = "SLEEPER HOLD", address = 102349221}
+local alexPowerBomb = {name = "POWER BOMB", address = 102349222}
+local alexPowerBackdrop = {name = "POWER BACKDROP", address = 102349223}
+local alexAirKneeSmash = {name = "AIR KNEE SMASH", address = 102349224}
+local alexExAirKneeSmash = {name = "EX AIR KNEE SMASH", address = 102349225}
+local alexAirKneeStampede = {name = "AIR KNEE STAMPEDE", address = 102349226}
+local alexExAirKneeStampede = {name = "EX AIR KNEE STAMPEDE", address = 102349227}
+local alexSlashElbow = {name = "SLASH ELBOW", address = 102349228}
+local alexExSlashElbow = {name = "EX SLASH ELBOW", address = 102397068}
+local alexHyperBomb = {name = "HYPER BOMB", address = 102349230}
+local alexBoomerangRaid = {name = "BOOMERANG RAID", address = 102387828}
+local alexStunGunHeadbutt = {name = "STUN GUN HEADBUTT", address = 102349233}
 
-function drawDynamicText()
-    showDebug(players[curPlayer] + charOffset[1])
-    showDebug(memory.readdword(players[curPlayer] + charOffset[1]))
+-- Jumping Moves
+local alexJLP = {name = "JUMPING LIGHT PUNCH", address = 102349234}
+local alexJMP = {name = "JUMPING MEDIUM PUNCH", address = 102349235}
+local alexJHP = {name = "JUMPING HEAVY PUNCH", address = 102349236}
+local alexJLK = {name = "JUMPING LIGHT KICK", address = 102349237}
+local alexJMK = {name = "JUMPING MEDIUM KICK", address = 102349238}
+local alexJHK = {name = "JUMPING HEAVY KICK", address = 102349239}
 
-    local color = "white"  -- Default color
+-- Trial Combo Moves List (Only these moves will be displayed and tracked for green frames)
+local trialComboMoves = {
+    {move = alexHPFlashChop, greenFrames = 0, hitDetected = false},  -- Heavy Flash Chop
+    {move = alexMP, greenFrames = 0, hitDetected = false},          -- Medium Punch
+    {move = alexLPFlashChop, greenFrames = 0, hitDetected = false}, -- Light Flash Chop
+    {move = alexBoomerangRaid, greenFrames = 0, hitDetected = false}-- Boomerang Raid
+}
 
-    -- Check if the button is pressed and hit detection occurs simultaneously
-    if memory.readdword(players[curPlayer] + charOffset[1]) == 102349208 and
-       memory.readdword(players[curPlayer] + charOffset[20]) ~= 0 then
-        hitConfirmed = true  -- Register the hit
+-- Define Green Frames for specific moves
+local greenFrameValues = {
+    [alexHPFlashChop] = 80, 
+    [alexMP] = 70,         
+    [alexLPFlashChop] = 100,
+    [alexBoomerangRaid] = 100,
+}
+
+-- Function to check for a hit and update greenFrames
+function updateGreenFrames()
+    for i, move in ipairs(trialComboMoves) do
+        local movePressed = memory.readdword(players[curPlayer] + charOffset[1]) == move.move.address
+        local hitDetected = memory.readdword(players[curPlayer] + charOffset[20]) ~= 0
+
+        if movePressed and hitDetected then
+            if move.greenFrames == 0 then
+                move.greenFrames = greenFrameValues[move.move] or 20  -- Default to 20 if not set
+                move.hitDetected = true
+            end
+            memory.writedword(players[curPlayer] + charOffset[20], 0)  -- Reset hit detection
+        end
     end
 
-    -- Change color only if the hit was confirmed
-    if hitConfirmed then
-        color = "green"
+    -- Extend green frames based on next move
+    for i = #trialComboMoves, 2, -1 do  -- Iterate backwards to extend properly
+        local prevMove = trialComboMoves[i - 1]
+        local currentMove = trialComboMoves[i]
+        
+        if currentMove.greenFrames > 0 and prevMove.greenFrames > 0 then
+            prevMove.greenFrames = math.max(prevMove.greenFrames, currentMove.greenFrames)
+        end
     end
 
-    -- Reset hit confirmation when the button is released
-    if memory.readdword(players[curPlayer] + charOffset[1]) ~= 102349208 and
-       memory.readdword(players[curPlayer] + charOffset[20]) == 0 then
-        hitConfirmed = false
+    -- Decrease green frames
+    for _, move in ipairs(trialComboMoves) do
+        if move.greenFrames > 0 then
+            move.greenFrames = move.greenFrames - 1
+        else
+            move.hitDetected = false
+        end
     end
-
-    -- Draw the text on the screen
-    gui.text(100, 50, "MEDIUM PUNCH", color)  -- Adjust coordinates as needed
 end
+
+-- Function to draw dynamic text
+function drawDynamicText()
+    updateGreenFrames()
+
+    local yPosition = 50
+    for _, move in ipairs(trialComboMoves) do
+        local color = (move.greenFrames > 0) and "green" or "white"
+        gui.text(40, yPosition, move.move.name, color)
+        yPosition = yPosition + 10
+    end
+end
+
 
 -- Modify the loadCharacterTrial function to draw "MEDIUM PUNCH" after savestate is loaded
 function loadCharacterTrial(char, trial)
@@ -316,8 +383,7 @@ end
 function mainLoop()
     -- Handle the start button input
     handleStartButton()
-    showDebug(players[curPlayer] + charOffset[5])
-    showDebug(memory.readdword(players[curPlayer] + charOffset[5]))
+    showDebug(memory.readdword(players[curPlayer] + charOffset[1]))
 
     -- Handle menu input when menu is visible
     if menuVisible then
