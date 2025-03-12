@@ -1,5 +1,14 @@
 -- SF3: 2nd Impact Training Menu Script
 
+
+local curGame = {[1] = 0x200e504, [2] = 0x200e910, [3] = 0x2010167}
+local players = {curGame[1],curGame[2]}
+local charOffset = {[1] = 0x1c0, [2] = 0x1c4, [3] = 0x1cc, [4] = 0x1da, [5] = 0x1dc, [6] = 0x1de, [7] = 0x25c, [8] = 0x260, [9] = 0x284, [10] = 0x288, [11] = 0x27c, [12] = 0x280, [13] = 0x290, [14] = 0x294, [15] = 0x298, [16] = 0x274, [17] = 0x278, [18] = 0x264, [19] = 0x268, [20] = 0x2d0}
+
+local curPlayer = 1 -- dont fully understand this one
+
+local PlayerAction = memory.readdword(players[curPlayer] + charOffset[1])
+
 -- Colors for UI (with transparency)
 COLORS = {
     background = "#000000" .. "80",  -- 50% transparent black
@@ -244,20 +253,85 @@ function handleStartButton()
     end
 end
 
--- Main game loop
+-- Variable to track if a hit has occurred during the current button press
+local hitConfirmed = false  
+
+function drawDynamicText()
+    showDebug(players[curPlayer] + charOffset[1])
+    showDebug(memory.readdword(players[curPlayer] + charOffset[1]))
+
+    local color = "white"  -- Default color
+
+    -- Check if the button is pressed and hit detection occurs simultaneously
+    if memory.readdword(players[curPlayer] + charOffset[1]) == 102349208 and
+       memory.readdword(players[curPlayer] + charOffset[20]) ~= 0 then
+        hitConfirmed = true  -- Register the hit
+    end
+
+    -- Change color only if the hit was confirmed
+    if hitConfirmed then
+        color = "green"
+    end
+
+    -- Reset hit confirmation when the button is released
+    if memory.readdword(players[curPlayer] + charOffset[1]) ~= 102349208 and
+       memory.readdword(players[curPlayer] + charOffset[20]) == 0 then
+        hitConfirmed = false
+    end
+
+    -- Draw the text on the screen
+    gui.text(100, 50, "MEDIUM PUNCH", color)  -- Adjust coordinates as needed
+end
+
+-- Modify the loadCharacterTrial function to draw "MEDIUM PUNCH" after savestate is loaded
+function loadCharacterTrial(char, trial)
+    showDebug("Loading savestate...")
+
+    -- Set the menu to be invisible immediately
+    menuVisible = false
+
+    local filename = char:lower() .. trial .. ".fs" -- Dynamic filename based on character and trial
+    
+    local f = io.open(filename, "r")
+    if f then
+        f:close()
+        showDebug("Found savestate file")
+        
+        local success, err = pcall(function()
+            savestate.load(filename)
+            showDebug("Savestate loaded")
+            savestateLoaded = true
+            inputBlockFrames = BLOCK_FRAMES
+        end)
+        
+        if not success then
+            showDebug("Error: " .. err)
+        end
+    else
+        showDebug("Error: Savestate not found")
+    end
+end
+
+-- Modify mainLoop to include drawDynamicText when savestate is loaded
 function mainLoop()
     -- Handle the start button input
     handleStartButton()
+    showDebug(players[curPlayer] + charOffset[5])
+    showDebug(memory.readdword(players[curPlayer] + charOffset[5]))
 
     -- Handle menu input when menu is visible
     if menuVisible then
         handleMenuInput()
-		drawHelpPanel()
-		drawCharacterPanel()
-		drawTrialExplanation()
-		gui.transparency(1)
-	else
-	end
+        drawHelpPanel()
+        drawCharacterPanel()
+        drawTrialExplanation()
+        gui.transparency(1)
+    else
+        -- Display "MEDIUM PUNCH" after savestate is loaded
+        if savestateLoaded then
+            drawDynamicText()
+        end
+    end
 end
 
 -- Run the main loop every frame
