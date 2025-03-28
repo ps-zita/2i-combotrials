@@ -6,19 +6,15 @@ local charOffset = {
     [11] = 0x27c, [12] = 0x280, [13] = 0x290, [14] = 0x294, [15] = 0x298,
     [16] = 0x274, [17] = 0x278, [18] = 0x264, [19] = 0x268, [20] = 0x2d2
 }
+local curPlayer = 1
+local PlayerAction = memory.readdword(players[curPlayer] + charOffset[1])
 
-local curPlayer = 1 -- don't fully understand this one
-
-local PlayerAction = memory.readdword(players[curPlayer] + charOffset[1])  -- playeraction = whatever the player is doing
-
--- ALEX MOVESET
 local alexHPFlashChop = {name = "HEAVY FLASH CHOP", address = 102385716}
 local alexMP = {name = "MEDIUM PUNCH", address = 102349208}
 local alexLPFlashChop = {name = "LIGHT FLASH CHOP", address = 102384844}
 local alexBoomerangRaid = {name = "BOOMERANG RAID", address = 102387828}
 local alexIdle = {name = "IDLE", address = 102302556, hidden = true}
 
--- KEN MOVESET
 local kenJumpForward = {name = "JUMP FORWARD", address = 103369704, hidden = true}
 local kenJMK = {name = "JUMPING MEDIUM KICK", address = 103411512, hiddenMove = kenJumpForward}
 local kenCMP = {name = "CLOSE MEDIUM PUNCH", address = 103403840}
@@ -30,50 +26,45 @@ local kenJHP = {name = "JUMPING HEAVY PUNCH", address = 103410856, hiddenMove = 
 local kenCHP = {name = "CLOSE HEAVY PUNCH", address = 103413664}
 local kenShoryuReppa = {name = "SHORYU REPPA", address = 103432660}
 
--- AKUMA MOVESET
 local akumaJumpForward = {name = "JUMP FORWARD", address = 103596280, hidden = true}
 local akumaDivekick = {name = "DIVEKICK", address = 103638780}
 local akumaCHP = {name = "CLOSE HEAVY PUNCH", address = 103632092}
 local akumaLKTatsu = {name = "LK TATSU", address = 103660928}
-local akumaLKTatsu2 = {name = "LK TATSU", address = 103660928}
 local akumaCLP = {name = "CLOSE LIGHT PUNCH", address = 103631116}
 local akumaCMK = {name = "CLOSE MEDIUM KICK", address = 103632780}
 local akumaLP = {name = "LIGHT PUNCH", address = 104000600}
-local akumaKara = {name = "MP KARA", address = 104000700}
-local akumaDemon = {name = "RAGING DEMON", address = 104000800}
+local akumaCRHP = {name = "CROUCHING HEAVY PUNCH", address = 103633932}
+local akumaKara = {name = "MP KARA", address = 103631804}
+local akumaDemon = {name = "RAGING DEMON", address = 103621536}
 
--- Define Akuma's transition move with the same RAM address
-local akumaLKTatsuTransition = {name = "LK TATSU TRANSITION", address = 103660928}
-
--- TRIAL COMBOS
 local trialComboMoves = {
     ALEX = {
         segment1 = {
-            {move = alexIdle, greenFrames = 1000, hitDetected = true},      -- Automatically activated hidden move
+            {move = alexIdle, greenFrames = 1000, hitDetected = true},
         },
         segment2 = {
-            {move = alexHPFlashChop, greenFrames = 0, hitDetected = false},  -- Heavy Flash Chop
-            {move = alexMP, greenFrames = 0, hitDetected = false},           -- Medium Punch
-            {move = alexLPFlashChop, greenFrames = 0, hitDetected = false},    -- Light Flash Chop
-            {move = alexBoomerangRaid, greenFrames = 0, hitDetected = false}   -- Boomerang Raid
+            {move = alexHPFlashChop, greenFrames = 0, hitDetected = false},
+            {move = alexMP, greenFrames = 0, hitDetected = false},
+            {move = alexLPFlashChop, greenFrames = 0, hitDetected = false},
+            {move = alexBoomerangRaid, greenFrames = 0, hitDetected = false}
         }
     },
     KEN = {
         segment1 = {
-            {move = kenJumpForward, greenFrames = 0, hitDetected = true},   -- Hidden Move before JMK
-            {move = kenJMK, greenFrames = 0, hitDetected = false},          -- Jumping Medium Kick
-            {move = kenCMP, greenFrames = 0, hitDetected = false},          -- Close Medium Punch
-            {move = kenCRHP, greenFrames = 0, hitDetected = false},         -- Crouching Heavy Punch
-            {move = kenEXTatsu, greenFrames = 0, hitDetected = false},        -- EX Tatsu
-            {move = kenEXShoryuken, greenFrames = 0, hitDetected = false}     -- EX Shoryuken
+            {move = kenJumpForward, greenFrames = 0, hitDetected = true},
+            {move = kenJMK, greenFrames = 0, hitDetected = false},
+            {move = kenCMP, greenFrames = 0, hitDetected = false},
+            {move = kenCRHP, greenFrames = 0, hitDetected = false},
+            {move = kenEXTatsu, greenFrames = 0, hitDetected = false},
+            {move = kenEXShoryuken, greenFrames = 0, hitDetected = false}
         },
         segment2 = {
-            {move = kenJumpForward, greenFrames = 0, hitDetected = true},   -- Hidden Move before JHP
-            {move = kenJHP, greenFrames = 0, hitDetected = false},          -- Jumping Heavy Punch
-            {move = kenCMP, greenFrames = 0, hitDetected = false},          -- Close Medium Punch
-            {move = kenCHP, greenFrames = 0, hitDetected = false},          -- Close Heavy Punch
-            {move = kenEXTatsu2, greenFrames = 0, hitDetected = false},       -- EX Tatsu
-            {move = kenShoryuReppa, greenFrames = 0, hitDetected = false}     -- Shoryu Reppa
+            {move = kenJumpForward, greenFrames = 0, hitDetected = true},
+            {move = kenJHP, greenFrames = 0, hitDetected = false},
+            {move = kenCMP, greenFrames = 0, hitDetected = false},
+            {move = kenCHP, greenFrames = 0, hitDetected = false},
+            {move = kenEXTatsu2, greenFrames = 0, hitDetected = false},
+            {move = kenShoryuReppa, greenFrames = 0, hitDetected = false}
         }
     },
     AKUMA = {
@@ -82,16 +73,20 @@ local trialComboMoves = {
             {move = akumaDivekick, greenFrames = 0, hitDetected = false},
             {move = akumaCHP, greenFrames = 0, hitDetected = false},
             {move = akumaLKTatsu, greenFrames = 0, hitDetected = false},
-            {move = akumaCLP, greenFrames = 0, hitDetected = false},
-            {move = akumaCMK, greenFrames = 0, hitDetected = false},
-            {move = akumaLKTatsu, greenFrames = 0, hitDetected = false}  -- Last move in segment1 for Akuma
         },
         segment2 = {
+            {move = akumaJumpForward, greenFrames = 0, hitDetected = true},
+            {move = akumaCLP, greenFrames = 0, hitDetected = false},
+            {move = akumaCRHP, greenFrames = 0, hitDetected = false},
+            {move = akumaLKTatsu, greenFrames = 0, hitDetected = false},
+        },
+        segment3 = {
             {move = akumaCLP, greenFrames = 0, hitDetected = false},
             {move = akumaDivekick, greenFrames = 0, hitDetected = false},
             {move = akumaCMK, greenFrames = 0, hitDetected = false},
             {move = akumaLKTatsu, greenFrames = 0, hitDetected = false},
-            {move = akumaCLP, greenFrames = 0, hitDetected = false},
+        },
+        segment4 = {
             {move = akumaCLP, greenFrames = 0, hitDetected = false},
             {move = akumaKara, greenFrames = 0, hitDetected = false},
             {move = akumaDemon, greenFrames = 0, hitDetected = false}
@@ -99,16 +94,13 @@ local trialComboMoves = {
     }
 }
 
--- DEFINE GREENFRAMES
 local greenFrameValues = {
-    -- ALEX greenframes
     [alexHPFlashChop] = 45,
     [alexMP] = 60,
     [alexLPFlashChop] = 77,
     [alexBoomerangRaid] = 100,
-    [alexIdle] = 1000,  -- Hidden move
-    -- KEN greenframes
-    [kenJumpForward] = 1000,  -- Hidden move
+    [alexIdle] = 1000,
+    [kenJumpForward] = 1000,
     [kenEXShoryuken] = 360,
     [kenCMP] = 22,
     [kenEXTatsu] = 67,
@@ -118,23 +110,20 @@ local greenFrameValues = {
     [kenCRHP] = 27,
     [kenJHP] = 40,
     [kenCHP] = 30,
-    -- AKUMA greenframes (example values; adjust as needed)
-    [akumaJumpForward] = 1000,  -- Hidden move
+    [akumaJumpForward] = 1000,
     [akumaDivekick] = 50,
     [akumaCHP] = 40,
     [akumaLKTatsu] = 105,
-    [akumaLKTatsu2] = 105,
-    [akumaLKTatsuTransition] = 105,  -- Transition move
     [akumaCLP] = 105,
     [akumaCMK] = 75,
+    [akumaCRHP] = 100,
     [akumaLP] = 30,
     [akumaKara] = 60,
     [akumaDemon] = 80
 }
 
--- Colors for UI (with transparency)
 COLORS = {
-    background = "#00000080",  -- 50% transparent black
+    background = "#00000080",
     text = "white",
     highlight = "green",
     box = "white",
@@ -142,13 +131,11 @@ COLORS = {
     debug = "yellow"
 }
 
--- Character list for SF3: 2nd Impact
 characters = {
     "ALEX", "AKUMA", "DUDLEY", "ELENA", "HUGO", "IBUKI", "KEN", "NECRO", "ORO",
     "RYU", "SEAN", "URIEN", "YANG", "YUN"
 }
 
--- trial descriptions for each character
 trialDescriptions = {
     ALEX = {
         "Lorem ipsum dolor sit amet\nConsectetur adipiscing elit\nSed do eiusmod tempor",
@@ -166,10 +153,9 @@ trialDescriptions = {
         "stun adds an extra frame of hitstun, this allows \nyou to do cl.mp > cr.hp and ex tatsu > shippu.\ntrial written by vesper"
     },
     AKUMA = {
-        "Segment1: Jump Forward, Divekick, CHP, LK Tatsu, CLP, CMK, LK Tatsu\nSegment2: CLP, Divekick, CMK, LK Tatsu, LP, MP Kara, Raging Demon"
+        "Segment1: Jump Forward, Divekick, CHP, LK Tatsu\nSegment2: Jump Forward, CLP, CMK, LK Tatsu\nSegment3: CLP, Divekick, CMK, LK Tatsu, (transition)\nSegment4: CLP, CLP\nSegment5: MP Kara, Raging Demon"
     }
 }
-
 for _, char in ipairs(characters) do
     if char ~= "ALEX" and char ~= "KEN" then
         if not trialDescriptions[char] then
@@ -178,10 +164,9 @@ for _, char in ipairs(characters) do
     end
 end
 
--- Variables to track menu state and inputs
 selectedChar = 1
 selectedBox = 1
-menuVisible = true  -- Start with the menu open
+menuVisible = true
 savestateLoaded = false
 firstFrame = true
 buttonPressed = false
@@ -194,24 +179,19 @@ debugMessage = ""
 debugTimer = 0
 debugMode = false
 
--- Input handling setup
-guiinputs = {
-    P1 = {previousinputs = {}}
-}
+guiinputs = { P1 = {previousinputs = {}} }
 
--- Define button names and their corresponding input keys
 local buttonMappings = {
-    [1] = "P1 Light Punch",  -- Light Punch
-    [2] = "P1 Medium Punch",  -- Medium Punch
-    [3] = "P1 Heavy Punch",  -- Heavy Punch
-    [4] = "P1 Light Kick",   -- Light Kick
-    [5] = "P1 Medium Kick",  -- Medium Kick
-    [6] = "P1 Heavy Kick",   -- Heavy Kick
-    [7] = "P1 Start",        -- Start Button (to trigger menu)
-    [9] = "P1 Coin"          -- Coin Button (to trigger debug mode)
+    [1] = "P1 Light Punch",
+    [2] = "P1 Medium Punch",
+    [3] = "P1 Heavy Punch",
+    [4] = "P1 Light Kick",
+    [5] = "P1 Medium Kick",
+    [6] = "P1 Heavy Kick",
+    [7] = "P1 Start",
+    [9] = "P1 Coin"
 }
 
--- Helper function to draw text on the screen
 function drawText(x, y, text, color)
     gui.text(x - 1, y, text, "black")
     gui.text(x + 1, y, text, "black")
@@ -220,18 +200,14 @@ function drawText(x, y, text, color)
     gui.text(x, y, text, color or COLORS.text)
 end
 
--- Helper function to read trial completion statuses from a file
 function readTrialCompletionStatus()
     local file = io.open("combo_trial_completion.txt", "r")
     if not file then return {} end
-
     local status = {}
     for line in file:lines() do
         local char, trial = line:match("^(%w+)(%d+) = COMPLETED$")
         if char and trial then
-            if not status[char] then
-                status[char] = {}
-            end
+            if not status[char] then status[char] = {} end
             status[char][tonumber(trial)] = true
         end
     end
@@ -241,23 +217,19 @@ end
 
 local trialStatus = readTrialCompletionStatus()
 
--- Function to draw a box on the screen
 function drawBox(x, y, width, height, isSelected, isCompleted)
     local outline = isSelected and COLORS.highlight or COLORS.box
     local fillColor = isCompleted and COLORS.completed or COLORS.background
     gui.box(x, y, x + width, y + height, fillColor, outline)
 end
 
--- Function to draw trial selection boxes
 function drawTrialBoxes(x, y, charIndex)
     local boxWidth = 5
     local boxHeight = 5
     local spacing = 2
     local startX = x + 35
-
     local char = characters[charIndex]
     local charStatus = trialStatus[char] or {}
-
     for i = 1, 10 do
         local boxX = startX + ((boxWidth + spacing) * (i - 1))
         local isSelected = (charIndex == selectedChar) and (i == selectedBox)
@@ -266,7 +238,6 @@ function drawTrialBoxes(x, y, charIndex)
     end
 end
 
--- Function to draw the trial explanation text
 function drawTrialExplanation()
     local char = characters[selectedChar]
     if trialDescriptions[char] and trialDescriptions[char][selectedBox] then
@@ -275,7 +246,6 @@ function drawTrialExplanation()
         local boxHeight = 45
         local boxX = 5
         local boxY = 110
-
         drawBox(boxX, boxY, boxWidth, boxHeight)
         drawText(boxX + 5, boxY + 10, desc)
     end
@@ -286,7 +256,6 @@ function drawCharacterPanel()
     local panelX = emu.screenwidth() - panelWidth - 5
     local itemHeight = 10
     drawBox(panelX, 5, panelWidth, (#characters * itemHeight) + 10)
-
     for i, char in ipairs(characters) do
         local y = 10 + ((i - 1) * itemHeight)
         local color = (i == selectedChar) and COLORS.highlight or COLORS.text
@@ -297,7 +266,6 @@ end
 
 function drawHelpPanel()
     drawBox(5, 5, 200, 100)
-
     local helpText = {
         "STREET FIGHTER 3: SECOND IMPACT COMBO TRIALS",
         "----------------------",
@@ -309,7 +277,6 @@ function drawHelpPanel()
         "RED BOX - TRIAL COMPLETED",
         "COIN BUTTON - Toggle Debug Mode"
     }
-
     for i, line in ipairs(helpText) do
         drawText(10, 10 + (i * 10), line)
     end
@@ -323,13 +290,11 @@ function drawCreditPanel()
         "satalite - help writing hit detection",
         "somethingwithaz - help finding memory addresses",
     }
-
     for i, line in ipairs(creditText) do
         drawText(10, 155 + (i * 10), line)
     end
 end
 
--- Function to show debug messages
 function showDebug(message)
     debugMessage = message
     debugTimer = 180
@@ -339,7 +304,7 @@ end
 function loadCharacterTrial(char, trial)
     showDebug("Loading savestate...")
     menuVisible = false
-    currentCharacter = char  -- set the current character for trials
+    currentCharacter = char
     local filename = char:lower() .. trial .. ".fs"
     local f = io.open(filename, "r")
     if f then
@@ -359,10 +324,8 @@ function loadCharacterTrial(char, trial)
     end
 end
 
--- Function to handle menu input
 function handleMenuInput()
     local inputs = joypad.get()
-
     if inputs["P1 Down"] and not guiinputs.P1.previousinputs["P1 Down"] then
         selectedChar = selectedChar % #characters + 1
         showDebug("Selected: " .. characters[selectedChar])
@@ -378,7 +341,6 @@ function handleMenuInput()
         if selectedBox < 1 then selectedBox = 10 end
         showDebug("Trial " .. selectedBox)
     end
-
     for i = 1, 9 do
         local button = buttonMappings[i]
         if inputs[button] and not guiinputs.P1.previousinputs[button] then
@@ -395,16 +357,13 @@ function handleMenuInput()
             end
         end
     end
-
     for k, v in pairs(inputs) do
         guiinputs.P1.previousinputs[k] = v
     end
 end
 
--- Function to handle start button press
 function handleStartButton()
     local inputs = joypad.get()
-
     if inputs["P1 Start"] then
         startHoldFrames = startHoldFrames + 1
         if startHoldFrames >= START_HOLD_THRESHOLD and not menuVisible then
@@ -436,24 +395,31 @@ local function resetGreenFrames()
 end
 
 function updateGreenFrames()
-    if comboCompleted and not isStunned then
-        return
+    if comboCompleted and not isStunned then return end
+    local segments = trialComboMoves[currentCharacter]
+    if not segments then return end
+
+    local activeSegment = nil
+    if currentCharacter == "AKUMA" then
+        if comboSegment == 1 then activeSegment = segments.segment1
+        elseif comboSegment == 2 then activeSegment = segments.segment2
+        elseif comboSegment == 3 then activeSegment = segments.segment3
+        elseif comboSegment == 4 then activeSegment = segments.segment4
+        elseif comboSegment == 5 then activeSegment = segments.segment5 end
+    else
+        if comboSegment == 1 then
+            activeSegment = segments.segment1
+        elseif comboSegment == 2 then
+            activeSegment = segments.segment2
+        end
     end
 
-    local segments = trialComboMoves[currentCharacter]
-    local allMovesGreen = true
-    local activeSegment = (comboSegment == 1) and segments.segment1 or 
-                         (currentCharacter == "AKUMA" and comboSegment == 3) and segments.segment3 or 
-                         segments.segment2
-
-    -- Check if all previous moves are completed before transition
-    local function checkPreviousMoves(currentIndex)
-        for i = 1, currentIndex - 1 do
-            if not activeSegment[i].hitDetected or activeSegment[i].greenFrames <= 0 then
-                return false
-            end
+    if debugMode then
+        print(string.format("Current Segment: %d, Character: %s", comboSegment, currentCharacter or "none"))
+        for i, move in ipairs(activeSegment) do
+            print(string.format("Move %d: %s, Green Frames: %d, Hit Detected: %s",
+                i, move.move.name, move.greenFrames, tostring(move.hitDetected)))
         end
-        return true
     end
 
     for i, move in ipairs(activeSegment) do
@@ -461,56 +427,31 @@ function updateGreenFrames()
             move.greenFrames = greenFrameValues[move.move] or 20
             move.hitDetected = true
         end
-
         local movePressed = memory.readdword(players[curPlayer] + charOffset[1])
         local moveAddress = move.move and move.move.address
         local hitValue = memory.readdword(players[curPlayer] + charOffset[20])
-        if movePressed and moveAddress and (movePressed == moveAddress) and (hitValue ~= 0) then
-            if debugMode or i == 1 or (activeSegment[i - 1] and activeSegment[i - 1].greenFrames > 0) then
-                if move.greenFrames == 0 then
-                    move.greenFrames = greenFrameValues[move.move] or 20
-                    move.hitDetected = true
-                end
+        if move.move.name == "MP KARA" then
+            if movePressed and moveAddress and (movePressed == moveAddress) then
+                move.greenFrames = greenFrameValues[move.move] or 20
+                move.hitDetected = true
+                if debugMode then print("Move detected: " .. move.move.name) end
             end
-            memory.writedword(players[curPlayer] + charOffset[20], 0)
         else
-            allMovesGreen = false
-        end
-
-        if not move.hitDetected then
-            move.greenFrames = 0
-        end
-
-        -- Transition logic
-        if comboSegment == 1 then
-            if currentCharacter == "KEN" and move.move.name == "EX SHORYUKEN" and move.greenFrames > 0 and move.hitDetected then
-                if checkPreviousMoves(i) then
-                    isStunned = true
-                    comboSegment = 2
-                    allMovesGreen = false
-                    break
+            if movePressed and moveAddress and (movePressed == moveAddress) and (hitValue ~= 0) then
+                if i == 1 or (activeSegment[i - 1] and activeSegment[i - 1].greenFrames > 0) then
+                    if move.greenFrames == 0 then
+                        move.greenFrames = greenFrameValues[move.move] or 20
+                        move.hitDetected = true
+                        if debugMode then print("Move detected: " .. move.move.name) end
+                    end
                 end
-            elseif currentCharacter == "AKUMA" and move.move.name == "LK TATSU" and move.greenFrames > 0 and move.hitDetected then
-                if checkPreviousMoves(i) then
-                    isStunned = true
-                    comboSegment = 2
-                    allMovesGreen = false
-                    break
-                end
-            end
-        elseif comboSegment == 2 and currentCharacter == "AKUMA" then
-            if move.move.name == "LK TATSU" and move.greenFrames > 0 and move.hitDetected then
-                if checkPreviousMoves(i) then
-                    isStunned = true
-                    comboSegment = 3
-                    allMovesGreen = false
-                    break
-                end
+                memory.writedword(players[curPlayer] + charOffset[20], 0)
+            else
+                activeSegment[i].greenFrames = activeSegment[i].greenFrames or 0
             end
         end
     end
 
-    -- Keep previous moves green
     for i = #activeSegment, 2, -1 do
         local prevMove = activeSegment[i - 1]
         if activeSegment[i].greenFrames > 0 then
@@ -518,127 +459,169 @@ function updateGreenFrames()
         end
     end
 
-    -- Reset segment1 if segment2 fails
-    if comboSegment == 2 then
-        for _, move in ipairs(segments.segment2) do
-            if move.hitDetected and move.greenFrames <= 0 then
-                for _, m in ipairs(segments.segment1) do
-                    m.greenFrames = 0
-                    m.hitDetected = false
+    local allMovesGreen = true
+    local anyMoveTurnedWhite = false
+    for i, move in ipairs(activeSegment) do
+        if move.greenFrames > 0 then
+            move.greenFrames = move.greenFrames - 1
+            if move.greenFrames <= 0 then 
+                move.hitDetected = false 
+                anyMoveTurnedWhite = true
+            end
+        else
+            allMovesGreen = false
+        end
+    end
+
+    if anyMoveTurnedWhite then
+        -- Turn all previous segments' moves to white
+        for segmentIndex = 1, comboSegment - 1 do
+            local previousSegment = segments["segment" .. segmentIndex]
+            if previousSegment then
+                for _, move in ipairs(previousSegment) do
+                    move.greenFrames = 0
+                    move.hitDetected = false
                 end
-                break
             end
         end
     end
 
-    -- Reset segment2 if segment3 fails (Akuma only)
-    if comboSegment == 3 and currentCharacter == "AKUMA" then
-        for _, move in ipairs(segments.segment3) do
-            if move.hitDetected and move.greenFrames <= 0 then
-                for _, m in ipairs(segments.segment2) do
-                    m.greenFrames = 0
-                    m.hitDetected = false
-                end
-                break
-            end
-        end
-    end
-
-    -- Update green frames for active segment
-    if comboSegment == 1 then
-        for _, move in ipairs(segments.segment1) do
-            if move.greenFrames > 0 then
-                move.greenFrames = move.greenFrames - 1
-            else
-                move.hitDetected = false
-            end
-        end
-    elseif comboSegment == 2 then
-        for _, move in ipairs(segments.segment2) do
-            if move.greenFrames > 0 then
-                move.greenFrames = move.greenFrames - 1
-            else
-                move.hitDetected = false
-            end
-        end
-    elseif comboSegment == 3 and currentCharacter == "AKUMA" then
-        for _, move in ipairs(segments.segment3) do
-            if move.greenFrames > 0 then
-                move.greenFrames = move.greenFrames - 1
-            else
-                move.hitDetected = false
-            end
-        end
-    end
-
-    -- Check for combo completion
     if allMovesGreen and not debugMode then
-        if currentCharacter == "AKUMA" and comboSegment == 3 then
-            comboCompleted = true
-            isStunned = false
-            comboSegment = 1
-            local file = io.open("combo_trial_completion.txt", "a")
-            if file then
-                file:write(currentCharacter .. selectedBox .. " = COMPLETED\n")
-                file:close()
+        if currentCharacter == "AKUMA" then
+            if comboSegment == 5 then
+                comboCompleted = true
+                isStunned = false
+                comboSegment = 1
+                local file = io.open("combo_trial_completion.txt", "a")
+                if file then
+                    file:write(currentCharacter .. selectedBox .. " = COMPLETED\n")
+                    file:close()
+                end
+            else
+                comboSegment = comboSegment + 1
+                isStunned = true
+                local nextSegment = segments["segment" .. comboSegment]
+                if nextSegment then
+                    for _, move in ipairs(nextSegment) do
+                        move.greenFrames = 0
+                        move.hitDetected = false
+                    end
+                end
             end
-        elseif currentCharacter ~= "AKUMA" and comboSegment == 2 then
-            comboCompleted = true
-            isStunned = false
-            comboSegment = 1
-            local file = io.open("combo_trial_completion.txt", "a")
-            if file then
-                file:write(currentCharacter .. selectedBox .. " = COMPLETED\n")
-                file:close()
+        else
+            if comboSegment == 2 then
+                comboCompleted = true
+                isStunned = false
+                comboSegment = 1
+                local file = io.open("combo_trial_completion.txt", "a")
+                if file then
+                    file:write(currentCharacter .. selectedBox .. " = COMPLETED\n")
+                    file:close()
+                end
+            else
+                comboSegment = comboSegment + 1
+                isStunned = true
+                local nextSegment = segments["segment" .. comboSegment]
+                if nextSegment then
+                    for _, move in ipairs(nextSegment) do
+                        move.greenFrames = 0
+                        move.hitDetected = false
+                    end
+                end
             end
+        end
+    end
+
+    local combined = {}
+    for _, segment in pairs(segments) do
+        for _, move in ipairs(segment) do
+            table.insert(combined, move)
+        end
+    end
+    local anyActive = false
+    for _, move in ipairs(combined) do
+        if move.hitDetected then anyActive = true break end
+    end
+    if not anyActive then 
+        resetGreenFrames() 
+        -- Ensure all segments are visually reset to white
+        for _, move in ipairs(combined) do
+            move.greenFrames = 0
+            move.hitDetected = false
         end
     end
 end
 
 function drawDynamicText()
     updateGreenFrames()
-
     local yPosition = 50
     local segments = trialComboMoves[currentCharacter]
-
-    for _, move in ipairs(segments.segment1) do
-        if not move.move.hidden then
-            local xOffset = 10
-            local color = (move.greenFrames > 0) and (debugMode and "yellow" or "green") or "white"
-            if move.move and move.move.name then
-                gui.text(xOffset, yPosition, move.move.name, color)
-            else
-                gui.text(40, yPosition, "Unknown Move", color)
-                print("Error: move.move or move.move.name is nil")
-            end
-            yPosition = yPosition + 10
-        end
-    end
-
-    for _, move in ipairs(segments.segment2) do
-        if not move.move.hidden then
-            local xOffset = 10
-            local color = (move.greenFrames > 0) and (debugMode and "yellow" or "green") or "white"
-            if move.move and move.move.name then
-                gui.text(xOffset, yPosition, move.move.name, color)
-            else
-                gui.text(40, yPosition, "Unknown Move", color)
-                print("Error: move.move or move.move.name is nil")
-            end
-            yPosition = yPosition + 10
-        end
-    end
-
+    if not segments then return end
     if debugMode then
         local personalActionAddress = memory.readdword(players[curPlayer] + charOffset[1])
         gui.text(10, 10, string.format("Player Action Address: %08X", personalActionAddress), "yellow")
+        gui.text(10, 30, string.format("Current Segment: %d", comboSegment), "yellow")
+    end
+    if segments.segment1 then
+        for _, move in ipairs(segments.segment1) do
+            if not move.move.hidden then
+                local xOffset = 10
+                local color = (move.greenFrames > 0) and (debugMode and "yellow" or "green") or "white"
+                if move.move and move.move.name then gui.text(xOffset, yPosition, move.move.name, color)
+                else gui.text(xOffset, yPosition, "Unknown Move", color) end
+                yPosition = yPosition + 10
+            end
+        end
+    end
+    if segments.segment2 then
+        for _, move in ipairs(segments.segment2) do
+            if not move.move.hidden then
+                local xOffset = 10
+                local color = (move.greenFrames > 0) and (debugMode and "yellow" or "green") or "white"
+                if move.move and move.move.name then gui.text(xOffset, yPosition, move.move.name, color)
+                else gui.text(xOffset, yPosition, "Unknown Move", color) end
+                yPosition = yPosition + 10
+            end
+        end
+    end
+    if currentCharacter == "AKUMA" then
+        if segments.segment3 then
+            for _, move in ipairs(segments.segment3) do
+                if not move.move.hidden then
+                    local xOffset = 10
+                    local color = (move.greenFrames > 0) and (debugMode and "yellow" or "green") or "white"
+                    if move.move and move.move.name then gui.text(xOffset, yPosition, move.move.name, color)
+                    else gui.text(xOffset, yPosition, "Unknown Move", color) end
+                    yPosition = yPosition + 10
+                end
+            end
+        end
+        if segments.segment4 then
+            for _, move in ipairs(segments.segment4) do
+                if not move.move.hidden then
+                    local xOffset = 10
+                    local color = (move.greenFrames > 0) and (debugMode and "yellow" or "green") or "white"
+                    if move.move and move.move.name then gui.text(xOffset, yPosition, move.move.name, color)
+                    else gui.text(xOffset, yPosition, "Unknown Move", color) end
+                    yPosition = yPosition + 10
+                end
+            end
+        end
+        if segments.segment5 then
+            for _, move in ipairs(segments.segment5) do
+                if not move.move.hidden then
+                    local xOffset = 10
+                    local color = (move.greenFrames > 0) and (debugMode and "yellow" or "green") or "white"
+                    if move.move and move.move.name then gui.text(xOffset, yPosition, move.move.name, color)
+                    else gui.text(xOffset, yPosition, "Unknown Move", color) end
+                    yPosition = yPosition + 10
+                end
+            end
+        end
     end
 end
 
-function onSavestateLoad()
-    resetGreenFrames()
-end
-
+function onSavestateLoad() resetGreenFrames() end
 savestate.registerload(onSavestateLoad)
 
 function mainLoop()
@@ -652,9 +635,7 @@ function mainLoop()
         gui.transparency(1)
         drawCreditPanel()
     else
-        if savestateLoaded then
-            drawDynamicText()
-        end
+        if savestateLoaded then drawDynamicText() end
     end
 end
 
