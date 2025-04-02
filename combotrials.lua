@@ -9,12 +9,14 @@ local charOffset = {
 local curPlayer = 1
 local PlayerAction = memory.readdword(players[curPlayer] + charOffset[1])
 
+-- ALEX moves (unchanged)
 local alexHPFlashChop = {name = "HEAVY FLASH CHOP", address = 102385716}
 local alexMP = {name = "MEDIUM PUNCH", address = 102349208}
 local alexLPFlashChop = {name = "LIGHT FLASH CHOP", address = 102384844}
 local alexBoomerangRaid = {name = "BOOMERANG RAID", address = 102387828}
 local alexIdle = {name = "IDLE", address = 102302556, hidden = true}
 
+-- KEN moves (unchanged)
 local kenJumpForward = {name = "JUMP FORWARD", address = 103369704, hidden = true}
 local kenJMK = {name = "JUMPING MEDIUM KICK", address = 103411512, hiddenMove = kenJumpForward}
 local kenCMP = {name = "CLOSE MEDIUM PUNCH", address = 103403840}
@@ -26,80 +28,114 @@ local kenJHP = {name = "JUMPING HEAVY PUNCH", address = 103410856, hiddenMove = 
 local kenCHP = {name = "CLOSE HEAVY PUNCH", address = 103413664}
 local kenShoryuReppa = {name = "SHORYU REPPA", address = 103432660}
 
+-- AKUMA moves (modified to support new trial)
 local akumaJumpForward = {name = "JUMP FORWARD", address = 103596280, hidden = true}
 local akumaDivekick = {name = "DIVEKICK", address = 103638780}
 local akumaCHP = {name = "CLOSE HEAVY PUNCH", address = 103632092}
-local akumaLKTatsu = {name = "LK TATSU", address = 103660928}
+local akumaLKTatsu = {name = "LK TATSU", address = 103660928}  -- used for light tatsu in trial2 (updated combo)
 local akumaCLP = {name = "CLOSE LIGHT PUNCH", address = 103631116}
 local akumaCMK = {name = "CLOSE MEDIUM KICK", address = 103632780}
 local akumaLP = {name = "LIGHT PUNCH", address = 104000600}
 local akumaCRHP = {name = "CROUCHING HEAVY PUNCH", address = 103633932}
 local akumaKara = {name = "MP KARA", address = 103631804}
 local akumaDemon = {name = "RAGING DEMON", address = 103621536}
+-- New moves for the updated Akuma trial (now trial 1):
+local akumaHTatsu = {name = "HK TATSU", address = 103661824}         -- heavy tatsu
+local akumaJHP = {name = "JUMPING HEAVY PUNCH", address = 103637820, hiddenMove = akumaJumpForward}
 
+-- Reorganized trialComboMoves with multi-trial support.
+-- For ALEX and KEN we wrap the single trial in trial number 1.
 local trialComboMoves = {
     ALEX = {
-        segment1 = {
-            {move = alexIdle, greenFrames = 1000, hitDetected = true},
-        },
-        segment2 = {
-            {move = alexHPFlashChop, greenFrames = 0, hitDetected = false},
-            {move = alexMP, greenFrames = 0, hitDetected = false},
-            {move = alexLPFlashChop, greenFrames = 0, hitDetected = false},
-            {move = alexBoomerangRaid, greenFrames = 0, hitDetected = false}
+        [1] = {
+            segment1 = {
+                {move = alexIdle, greenFrames = 1000, hitDetected = true},
+            },
+            segment2 = {
+                {move = alexHPFlashChop, greenFrames = 0, hitDetected = false},
+                {move = alexMP, greenFrames = 0, hitDetected = false},
+                {move = alexLPFlashChop, greenFrames = 0, hitDetected = false},
+                {move = alexBoomerangRaid, greenFrames = 0, hitDetected = false},
+            }
         }
     },
     KEN = {
-        segment1 = {
-            {move = kenJumpForward, greenFrames = 0, hitDetected = true},
-            {move = kenJMK, greenFrames = 0, hitDetected = false},
-            {move = kenCMP, greenFrames = 0, hitDetected = false},
-            {move = kenCRHP, greenFrames = 0, hitDetected = false},
-            {move = kenEXTatsu, greenFrames = 0, hitDetected = false},
-            {move = kenEXShoryuken, greenFrames = 0, hitDetected = false}
-        },
-        segment2 = {
-            {move = kenJumpForward, greenFrames = 0, hitDetected = true},
-            {move = kenJHP, greenFrames = 0, hitDetected = false},
-            {move = kenCMP, greenFrames = 0, hitDetected = false},
-            {move = kenCHP, greenFrames = 0, hitDetected = false},
-            {move = kenEXTatsu2, greenFrames = 0, hitDetected = false},
-            {move = kenShoryuReppa, greenFrames = 0, hitDetected = false}
+        [1] = {
+            segment1 = {
+                {move = kenJumpForward, greenFrames = 0, hitDetected = true},
+                {move = kenJMK, greenFrames = 0, hitDetected = false},
+                {move = kenCMP, greenFrames = 0, hitDetected = false},
+                {move = kenCRHP, greenFrames = 0, hitDetected = false},
+                {move = kenEXTatsu, greenFrames = 0, hitDetected = false},
+                {move = kenEXShoryuken, greenFrames = 0, hitDetected = false},
+            },
+            segment2 = {
+                {move = kenJumpForward, greenFrames = 0, hitDetected = false},
+                {move = kenJHP, greenFrames = 0, hitDetected = false},
+                {move = kenCMP, greenFrames = 0, hitDetected = false},
+                {move = kenCHP, greenFrames = 0, hitDetected = false},
+                {move = kenEXTatsu2, greenFrames = 0, hitDetected = false},
+                {move = kenShoryuReppa, greenFrames = 0, hitDetected = false},
+            }
         }
     },
     AKUMA = {
-        segment1 = {
-            {move = akumaJumpForward, greenFrames = 0, hitDetected = true},
-            {move = akumaDivekick, greenFrames = 0, hitDetected = false},
-            {move = akumaCHP, greenFrames = 0, hitDetected = false},
-            {move = akumaLKTatsu, greenFrames = 0, hitDetected = false},
+        -- Trial 1: Updated combo (formerly trial 2), now at index [1]
+        [1] = {
+            -- Here we add segmentGreenFrames on segment1 to affect all moves.
+            segment1 = {
+                segmentGreenFrames = 50,  -- custom overall greenFrames for the entire segment
+                {move = akumaJumpForward, greenFrames = 0, hitDetected = false},
+                {move = akumaDivekick, greenFrames = 0, hitDetected = false},
+                {move = akumaCHP, greenFrames = 0, hitDetected = false},
+                {move = akumaLKTatsu, greenFrames = 0, hitDetected = false},  -- light tatsu
+                {move = akumaHTatsu, greenFrames = 0, hitDetected = false},   -- heavy tatsu
+                {move = akumaJHP, greenFrames = 0, hitDetected = false},      -- jumping heavy punch
+            },
+            segment2 = {
+                {move = akumaKara, greenFrames = 0, hitDetected = false},
+                {move = akumaDemon, greenFrames = 0, hitDetected = false},
+                {move = akumaCHP, greenFrames = 0, hitDetected = false},      -- heavy punch as final move
+            }
         },
-        segment2 = {
-            {move = akumaJumpForward, greenFrames = 0, hitDetected = true},
-            {move = akumaCLP, greenFrames = 0, hitDetected = false},
-            {move = akumaCRHP, greenFrames = 0, hitDetected = false},
-            {move = akumaLKTatsu, greenFrames = 0, hitDetected = false},
-        },
-        segment3 = {
-            {move = akumaCLP, greenFrames = 0, hitDetected = false},
-            {move = akumaDivekick, greenFrames = 0, hitDetected = false},
-            {move = akumaCMK, greenFrames = 0, hitDetected = false},
-            {move = akumaLKTatsu, greenFrames = 0, hitDetected = false},
-        },
-        segment4 = {
-            {move = akumaCLP, greenFrames = 0, hitDetected = false},
-            {move = akumaKara, greenFrames = 0, hitDetected = false},
-            {move = akumaDemon, greenFrames = 0, hitDetected = false}
+        -- Trial 2: Original Akuma trial (formerly trial 1), now at index [2]
+        [2] = {
+            segment1 = {
+                {move = akumaJumpForward, greenFrames = 0, hitDetected = true},
+                {move = akumaDivekick, greenFrames = 0, hitDetected = false},
+                {move = akumaCHP, greenFrames = 0, hitDetected = false},
+                {move = akumaLKTatsu, greenFrames = 0, hitDetected = false},
+            },
+            segment2 = {
+                {move = akumaJumpForward, greenFrames = 0, hitDetected = true},
+                {move = akumaCLP, greenFrames = 0, hitDetected = false},
+                {move = akumaCRHP, greenFrames = 0, hitDetected = false},
+                {move = akumaLKTatsu, greenFrames = 0, hitDetected = false},
+            },
+            segment3 = {
+                {move = akumaCLP, greenFrames = 0, hitDetected = false},
+                {move = akumaDivekick, greenFrames = 0, hitDetected = false},
+                {move = akumaCMK, greenFrames = 0, hitDetected = false},
+                {move = akumaLKTatsu, greenFrames = 0, hitDetected = false},
+            },
+            segment4 = {
+                {move = akumaCLP, greenFrames = 0, hitDetected = false},
+                {move = akumaKara, greenFrames = 0, hitDetected = false},
+                {move = akumaDemon, greenFrames = 0, hitDetected = false},
+            },
+            segment5 = {}
         }
     }
 }
 
 local greenFrameValues = {
+    -- ALEX
     [alexHPFlashChop] = 45,
     [alexMP] = 60,
     [alexLPFlashChop] = 77,
     [alexBoomerangRaid] = 100,
     [alexIdle] = 1000,
+    -- KEN
     [kenJumpForward] = 1000,
     [kenEXShoryuken] = 360,
     [kenCMP] = 22,
@@ -110,16 +146,19 @@ local greenFrameValues = {
     [kenCRHP] = 27,
     [kenJHP] = 40,
     [kenCHP] = 30,
+    -- AKUMA
     [akumaJumpForward] = 1000,
-    [akumaDivekick] = 50,
-    [akumaCHP] = 40,
+    [akumaDivekick] = 25,
+    [akumaCHP] = 35,
     [akumaLKTatsu] = 105,
-    [akumaCLP] = 105,
-    [akumaCMK] = 75,
-    [akumaCRHP] = 100,
+    [akumaCLP] = 40,
+    [akumaCMK] = 23,
+    [akumaCRHP] = 35,
     [akumaLP] = 30,
     [akumaKara] = 60,
-    [akumaDemon] = 80
+    [akumaDemon] = 80,
+    [akumaHTatsu] = 110,   -- heavy tatsu
+    [akumaJHP] = 40       -- jumping heavy punch
 }
 
 COLORS = {
@@ -136,7 +175,8 @@ characters = {
     "RYU", "SEAN", "URIEN", "YANG", "YUN"
 }
 
-trialDescriptions = {
+-- Updated trialDescriptions with multiple trials for AKUMA.
+local trialDescriptions = {
     ALEX = {
         "Lorem ipsum dolor sit amet\nConsectetur adipiscing elit\nSed do eiusmod tempor",
         "Ut enim ad minim veniam\nQuis nostrud exercitation\nUllamco laboris nisi",
@@ -153,7 +193,8 @@ trialDescriptions = {
         "stun adds an extra frame of hitstun, this allows \nyou to do cl.mp > cr.hp and ex tatsu > shippu.\ntrial written by vesper"
     },
     AKUMA = {
-        "Segment1: Jump Forward, Divekick, CHP, LK Tatsu\nSegment2: Jump Forward, CLP, CMK, LK Tatsu\nSegment3: CLP, Divekick, CMK, LK Tatsu, (transition)\nSegment4: CLP, CLP\nSegment5: MP Kara, Raging Demon"
+        [1] = "Trial 1: Segment 1 (Updated Combo with custom segment greenFrames)\nSegment 2: MP Kara, Demon, Heavy Punch",
+        [2] = "Trial 2: Original Akuma Combo\nJump Forward, Divekick, CHP, LK Tatsu\nJump Forward, CLP, CRHP, LK Tatsu\nCLP, Divekick, CMK, LK Tatsu\nCLP, Kara, Demon"
     }
 }
 for _, char in ipairs(characters) do
@@ -240,8 +281,17 @@ end
 
 function drawTrialExplanation()
     local char = characters[selectedChar]
-    if trialDescriptions[char] and trialDescriptions[char][selectedBox] then
-        local desc = trialDescriptions[char][selectedBox]
+    local desc = nil
+    if trialDescriptions[char] then
+        if type(trialDescriptions[char][1]) == "string" then
+            if char == "AKUMA" then
+                desc = trialDescriptions[char][selectedBox] or trialDescriptions[char][1]
+            else
+                desc = trialDescriptions[char][selectedBox] or trialDescriptions[char][1]
+            end
+        end
+    end
+    if desc then
         local boxWidth = 200
         local boxHeight = 45
         local boxX = 5
@@ -382,10 +432,12 @@ end
 
 local function resetGreenFrames()
     for _, character in pairs(trialComboMoves) do
-        for _, segment in pairs(character) do
-            for _, move in ipairs(segment) do
-                move.greenFrames = 0
-                move.hitDetected = false
+        for _, trial in pairs(character) do
+            for _, segment in pairs(trial) do
+                for _, move in ipairs(segment) do
+                    move.greenFrames = 0
+                    move.hitDetected = false
+                end
             end
         end
     end
@@ -396,21 +448,38 @@ end
 
 function updateGreenFrames()
     if comboCompleted and not isStunned then return end
-    local segments = trialComboMoves[currentCharacter]
+    local segments = trialComboMoves[currentCharacter] and trialComboMoves[currentCharacter][selectedBox]
     if not segments then return end
 
     local activeSegment = nil
     if currentCharacter == "AKUMA" then
-        if comboSegment == 1 then activeSegment = segments.segment1
-        elseif comboSegment == 2 then activeSegment = segments.segment2
-        elseif comboSegment == 3 then activeSegment = segments.segment3
-        elseif comboSegment == 4 then activeSegment = segments.segment4
-        elseif comboSegment == 5 then activeSegment = segments.segment5 end
+        if segments.segment1 and comboSegment == 1 then
+            activeSegment = segments.segment1
+        elseif segments.segment2 and comboSegment == 2 then
+            activeSegment = segments.segment2
+        elseif segments.segment3 and comboSegment == 3 then
+            activeSegment = segments.segment3
+        elseif segments.segment4 and comboSegment == 4 then
+            activeSegment = segments.segment4
+        elseif segments.segment5 and comboSegment == 5 then
+            activeSegment = segments.segment5
+        end
     else
         if comboSegment == 1 then
             activeSegment = segments.segment1
         elseif comboSegment == 2 then
             activeSegment = segments.segment2
+        end
+    end
+
+    if not activeSegment then return end
+
+    -- If the segment has its own overall greenFrames value, apply it to all moves that haven't been triggered yet.
+    if activeSegment.segmentGreenFrames then
+        for _, move in ipairs(activeSegment) do
+            if move.greenFrames == 0 then
+                move.greenFrames = activeSegment.segmentGreenFrames
+            end
         end
     end
 
@@ -474,7 +543,6 @@ function updateGreenFrames()
     end
 
     if anyMoveTurnedWhite then
-        -- Turn all previous segments' moves to white
         for segmentIndex = 1, comboSegment - 1 do
             local previousSegment = segments["segment" .. segmentIndex]
             if previousSegment then
@@ -488,7 +556,7 @@ function updateGreenFrames()
 
     if allMovesGreen and not debugMode then
         if currentCharacter == "AKUMA" then
-            if comboSegment == 5 then
+            if comboSegment ==  ( (trialComboMoves[currentCharacter][selectedBox].segment2 and 2) or 5) then
                 comboCompleted = true
                 isStunned = false
                 comboSegment = 1
@@ -544,7 +612,6 @@ function updateGreenFrames()
     end
     if not anyActive then 
         resetGreenFrames() 
-        -- Ensure all segments are visually reset to white
         for _, move in ipairs(combined) do
             move.greenFrames = 0
             move.hitDetected = false
@@ -555,7 +622,7 @@ end
 function drawDynamicText()
     updateGreenFrames()
     local yPosition = 50
-    local segments = trialComboMoves[currentCharacter]
+    local segments = trialComboMoves[currentCharacter] and trialComboMoves[currentCharacter][selectedBox]
     if not segments then return end
     if debugMode then
         local personalActionAddress = memory.readdword(players[curPlayer] + charOffset[1])
@@ -621,7 +688,9 @@ function drawDynamicText()
     end
 end
 
-function onSavestateLoad() resetGreenFrames() end
+function onSavestateLoad() 
+    resetGreenFrames() 
+end
 savestate.registerload(onSavestateLoad)
 
 function mainLoop()
@@ -635,7 +704,9 @@ function mainLoop()
         gui.transparency(1)
         drawCreditPanel()
     else
-        if savestateLoaded then drawDynamicText() end
+        if savestateLoaded then 
+            drawDynamicText() 
+        end
     end
 end
 
