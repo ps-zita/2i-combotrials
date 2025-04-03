@@ -28,23 +28,33 @@ local kenJHP = {name = "JUMPING HEAVY PUNCH", address = 103410856, hiddenMove = 
 local kenCHP = {name = "CLOSE HEAVY PUNCH", address = 103413664}
 local kenShoryuReppa = {name = "SHORYU REPPA", address = 103432660}
 
--- AKUMA moves (modified to support new trial)
+-- New Ken moves for combo 2
+local kenLightShoryuken = {name = "LIGHT SHORYUKEN", address = 103429212}
+local kenShippuJinraikyaku = {name = "SHIPPU JINRAIKYAKU", address = 103434300}
+
+-- AKUMA moves
 local akumaJumpForward = {name = "JUMP FORWARD", address = 103596280, hidden = true}
 local akumaDivekick = {name = "DIVEKICK", address = 103638780}
 local akumaCHP = {name = "CLOSE HEAVY PUNCH", address = 103632092}
-local akumaLKTatsu = {name = "LK TATSU", address = 103660928}  -- used for light tatsu in trial2 (updated combo)
+local akumaLKTatsu = {name = "LK TATSU", address = 103660928}  -- used for light tatsu
 local akumaCLP = {name = "CLOSE LIGHT PUNCH", address = 103631116}
 local akumaCMK = {name = "CLOSE MEDIUM KICK", address = 103632780}
 local akumaLP = {name = "LIGHT PUNCH", address = 104000600}
 local akumaCRHP = {name = "CROUCHING HEAVY PUNCH", address = 103633932}
 local akumaKara = {name = "MP KARA", address = 103631804}
 local akumaDemon = {name = "RAGING DEMON", address = 103621536}
--- New moves for the updated Akuma trial (now trial 1):
 local akumaHTatsu = {name = "HK TATSU", address = 103661824}         -- heavy tatsu
 local akumaJHP = {name = "JUMPING HEAVY PUNCH", address = 103637820, hiddenMove = akumaJumpForward}
 
+-- New HUGO moves for trial 1
+local hugoMediumUltraThrow = {name = "HEAVY ULTRA THROW", address = 102800188}
+local hugoHeavyPalmBomber  = {name = "HEAVY PALM BOMBER", address = 102846464}
+local hugoMegatonPress     = {name = "MEGATON PRESS", address = 102854024}
+local hugoMoonsaultPress   = {name = "MOONSAULT PRESS", address = 102797300}
+
 -- Reorganized trialComboMoves with multi-trial support.
--- For ALEX and KEN we wrap the single trial in trial number 1.
+-- For ALEX, KEN, and AKUMA we wrap the single trial in trial number 1 and now add trial 2 for Ken.
+-- Also adding HUGO trial 1.
 local trialComboMoves = {
     ALEX = {
         [1] = {
@@ -77,28 +87,35 @@ local trialComboMoves = {
                 {move = kenEXTatsu2, greenFrames = 0, hitDetected = false},
                 {move = kenShoryuReppa, greenFrames = 0, hitDetected = false},
             }
-        }
+        },
+        [2] = {
+            segment1 = {
+                {move = kenLightShoryuken, greenFrames = 0, hitDetected = false},
+                {move = kenShippuJinraikyaku, greenFrames = 0, hitDetected = false},
+            },
+            segment2 = {
+                {move = kenShippuJinraikyaku, greenFrames = 0, hitDetected = false},
+            },
+            segment3 = {
+                {move = kenShippuJinraikyaku, greenFrames = 0, hitDetected = false},
+            },
+        },
     },
     AKUMA = {
-        -- Trial 1: Updated combo (formerly trial 2), now at index [1]
         [1] = {
-            -- Here we add segmentGreenFrames on segment1 to affect all moves.
             segment1 = {
-                segmentGreenFrames = 50,  -- custom overall greenFrames for the entire segment
                 {move = akumaJumpForward, greenFrames = 0, hitDetected = false},
                 {move = akumaDivekick, greenFrames = 0, hitDetected = false},
                 {move = akumaCHP, greenFrames = 0, hitDetected = false},
-                {move = akumaLKTatsu, greenFrames = 0, hitDetected = false},  -- light tatsu
-                {move = akumaHTatsu, greenFrames = 0, hitDetected = false},   -- heavy tatsu
-                {move = akumaJHP, greenFrames = 0, hitDetected = false},      -- jumping heavy punch
+                {move = akumaLKTatsu, greenFrames = 0, hitDetected = false},
+                {move = akumaHTatsu, greenFrames = 0, hitDetected = false},
+                {move = akumaJHP, greenFrames = 0, hitDetected = false},
             },
             segment2 = {
                 {move = akumaKara, greenFrames = 0, hitDetected = false},
                 {move = akumaDemon, greenFrames = 0, hitDetected = false},
-                {move = akumaCHP, greenFrames = 0, hitDetected = false},      -- heavy punch as final move
             }
         },
-        -- Trial 2: Original Akuma trial (formerly trial 1), now at index [2]
         [2] = {
             segment1 = {
                 {move = akumaJumpForward, greenFrames = 0, hitDetected = true},
@@ -123,7 +140,31 @@ local trialComboMoves = {
                 {move = akumaKara, greenFrames = 0, hitDetected = false},
                 {move = akumaDemon, greenFrames = 0, hitDetected = false},
             },
-            segment5 = {}
+            segment5 = {} -- Extra segment if needed
+        }
+    },
+    HUGO = {
+        [1] = {
+            segment1 = {
+                {move = hugoMediumUltraThrow, greenFrames = 0, hitDetected = false},
+                {move = hugoHeavyPalmBomber,  greenFrames = 0, hitDetected = false},
+            },
+            segment2 = {
+                {move = hugoHeavyPalmBomber, greenFrames = 0, hitDetected = false},
+            },
+            segment3 = {
+                {move = hugoHeavyPalmBomber, greenFrames = 0, hitDetected = false},
+            },
+            segment4 = {
+                {move = hugoHeavyPalmBomber, greenFrames = 0, hitDetected = false},
+            },
+            segment5 = {
+                {move = hugoHeavyPalmBomber, greenFrames = 0, hitDetected = false},
+            },
+            segment6 = {
+                {move = hugoMegatonPress,   greenFrames = 0, hitDetected = false},
+                {move = hugoMoonsaultPress, greenFrames = 0, hitDetected = false},
+            },
         }
     }
 }
@@ -146,6 +187,8 @@ local greenFrameValues = {
     [kenCRHP] = 27,
     [kenJHP] = 40,
     [kenCHP] = 30,
+    [kenLightShoryuken] = 120,         -- new value for LIGHT SHORYUKEN
+    [kenShippuJinraikyaku] = 80,        -- new value for SHIPPU JINRAIKYAKU
     -- AKUMA
     [akumaJumpForward] = 1000,
     [akumaDivekick] = 25,
@@ -157,8 +200,13 @@ local greenFrameValues = {
     [akumaLP] = 30,
     [akumaKara] = 60,
     [akumaDemon] = 80,
-    [akumaHTatsu] = 110,   -- heavy tatsu
-    [akumaJHP] = 40       -- jumping heavy punch
+    [akumaHTatsu] = 110,
+    [akumaJHP] = 40,
+    -- HUGO (new moves)
+    [hugoMediumUltraThrow] = 75,    
+    [hugoHeavyPalmBomber]  = 165,       
+    [hugoMegatonPress]     = 295,     
+    [hugoMoonsaultPress]   = 105       
 }
 
 COLORS = {
@@ -175,7 +223,6 @@ characters = {
     "RYU", "SEAN", "URIEN", "YANG", "YUN"
 }
 
--- Updated trialDescriptions with multiple trials for AKUMA.
 local trialDescriptions = {
     ALEX = {
         "Lorem ipsum dolor sit amet\nConsectetur adipiscing elit\nSed do eiusmod tempor",
@@ -190,11 +237,15 @@ local trialDescriptions = {
         "Cum sociis natoque\nPenatibus et magnis dis\nParturient montes nascetur"
     },
     KEN = {
-        "stun adds an extra frame of hitstun, this allows \nyou to do cl.mp > cr.hp and ex tatsu > shippu.\ntrial written by vesper"
+        [2] = "stun adds an extra frame of hitstun, this allows \nyou to do cl.mp > cr.hp and ex tatsu > shippu.\ntrial by vesper",
+        [1] = "this one is stupid lmao\ntrial by vesper"
+    },
+    HUGO = {
+        [1] = "this character fucking sucks\nthis trial is also kinda broken"
     },
     AKUMA = {
-        [1] = "Trial 1: Segment 1 (Updated Combo with custom segment greenFrames)\nSegment 2: MP Kara, Demon, Heavy Punch",
-        [2] = "Trial 2: Original Akuma Combo\nJump Forward, Divekick, CHP, LK Tatsu\nJump Forward, CLP, CRHP, LK Tatsu\nCLP, Divekick, CMK, LK Tatsu\nCLP, Kara, Demon"
+        [2] = "light punch in a juggle against a stunned gill\nallows for the next move to restand",
+        [1] = "normal corner bnb but the reset > kara demon\nis only a true combo on hugo"
     }
 }
 for _, char in ipairs(characters) do
@@ -219,6 +270,9 @@ START_HOLD_THRESHOLD = 30
 debugMessage = ""
 debugTimer = 0
 debugMode = false
+
+-- New variable for segment delay (for each combo move update)
+local segmentDelay = 0
 
 guiinputs = { P1 = {previousinputs = {}} }
 
@@ -256,7 +310,7 @@ function readTrialCompletionStatus()
     return status
 end
 
-local trialStatus = readTrialCompletionStatus()
+local trialStatus = {}
 
 function drawBox(x, y, width, height, isSelected, isCompleted)
     local outline = isSelected and COLORS.highlight or COLORS.box
@@ -284,11 +338,7 @@ function drawTrialExplanation()
     local desc = nil
     if trialDescriptions[char] then
         if type(trialDescriptions[char][1]) == "string" then
-            if char == "AKUMA" then
-                desc = trialDescriptions[char][selectedBox] or trialDescriptions[char][1]
-            else
-                desc = trialDescriptions[char][selectedBox] or trialDescriptions[char][1]
-            end
+            desc = trialDescriptions[char][selectedBox] or trialDescriptions[char][1]
         end
     end
     if desc then
@@ -302,6 +352,7 @@ function drawTrialExplanation()
 end
 
 function drawCharacterPanel()
+    trialStatus = readTrialCompletionStatus()
     local panelWidth = 120
     local panelX = emu.screenwidth() - panelWidth - 5
     local itemHeight = 10
@@ -325,7 +376,6 @@ function drawHelpPanel()
         "LEFT/RIGHT - Select Trial",
         "MEDIUM PUNCH/KICK - Confirm Selection",
         "RED BOX - TRIAL COMPLETED",
-        "COIN BUTTON - Toggle Debug Mode"
     }
     for i, line in ipairs(helpText) do
         drawText(10, 10 + (i * 10), line)
@@ -355,22 +405,49 @@ function loadCharacterTrial(char, trial)
     showDebug("Loading savestate...")
     menuVisible = false
     currentCharacter = char
-    local filename = char:lower() .. trial .. ".fs"
-    local f = io.open(filename, "r")
-    if f then
-        f:close()
-        showDebug("Found savestate file")
-        local success, err = pcall(function()
-            savestate.load(filename)
-            showDebug("Savestate loaded")
-            savestateLoaded = true
-            inputBlockFrames = BLOCK_FRAMES
-        end)
-        if not success then
-            showDebug("Error: " .. err)
+    -- For Ken's trial 2, load both ken2.fs and ken2.fr
+    if char == "KEN" and trial == 2 then
+        local fsFilename = "ken2.fs"
+        local frFilename = "ken2.fr"
+        local fsFile = io.open(fsFilename, "r")
+        local frFile = io.open(frFilename, "r")
+        if fsFile and frFile then
+            fsFile:close()
+            frFile:close()
+            local success_fs, err_fs = pcall(function() 
+                savestate.load(fsFilename) 
+            end)
+            local success_fr, err_fr = pcall(function() 
+                savestate.load(frFilename) 
+            end)
+            if success_fs and success_fr then
+                showDebug("Loaded Ken trial 2 (ken2.fs and ken2.fr)")
+                savestateLoaded = true
+                inputBlockFrames = BLOCK_FRAMES
+            else
+                showDebug("Error loading ken2.fs or ken2.fr")
+            end
+        else
+            showDebug("Error: Missing ken2.fs or ken2.fr savestate file")
         end
     else
-        showDebug("Error: Savestate not found")
+        local filename = char:lower() .. trial .. ".fs"
+        local f = io.open(filename, "r")
+        if f then
+            f:close()
+            showDebug("Found savestate file: " .. filename)
+            local success, err = pcall(function()
+                savestate.load(filename)
+                showDebug("Savestate loaded")
+                savestateLoaded = true
+                inputBlockFrames = BLOCK_FRAMES
+            end)
+            if not success then
+                showDebug("Error: " .. err)
+            end
+        else
+            showDebug("Error: Savestate not found (" .. filename .. ")")
+        end
     end
 end
 
@@ -444,12 +521,17 @@ local function resetGreenFrames()
     comboSegment = 1
     comboCompleted = false
     isStunned = false
+    segmentDelay = 0  -- reset delay counter
 end
 
 function updateGreenFrames()
-    if comboCompleted and not isStunned then return end
+    if comboCompleted and not isStunned then 
+        return 
+    end
     local segments = trialComboMoves[currentCharacter] and trialComboMoves[currentCharacter][selectedBox]
-    if not segments then return end
+    if not segments then 
+        return 
+    end
 
     local activeSegment = nil
     if currentCharacter == "AKUMA" then
@@ -465,22 +547,28 @@ function updateGreenFrames()
             activeSegment = segments.segment5
         end
     else
+        -- Manually check segments for non-AKUMA characters (e.g., HUGO)
         if comboSegment == 1 then
             activeSegment = segments.segment1
         elseif comboSegment == 2 then
             activeSegment = segments.segment2
+        elseif comboSegment == 3 then
+            activeSegment = segments.segment3
+        elseif comboSegment == 4 then
+            activeSegment = segments.segment4
+        elseif comboSegment == 5 then
+            activeSegment = segments.segment5
+        elseif comboSegment == 6 then
+            activeSegment = segments.segment6
+        elseif comboSegment == 7 then
+            activeSegment = segments.segment7
+        elseif comboSegment == 8 then
+            activeSegment = segments.segment8
         end
     end
 
-    if not activeSegment then return end
-
-    -- If the segment has its own overall greenFrames value, apply it to all moves that haven't been triggered yet.
-    if activeSegment.segmentGreenFrames then
-        for _, move in ipairs(activeSegment) do
-            if move.greenFrames == 0 then
-                move.greenFrames = activeSegment.segmentGreenFrames
-            end
-        end
+    if not activeSegment then 
+        return 
     end
 
     if debugMode then
@@ -488,6 +576,24 @@ function updateGreenFrames()
         for i, move in ipairs(activeSegment) do
             print(string.format("Move %d: %s, Green Frames: %d, Hit Detected: %s",
                 i, move.move.name, move.greenFrames, tostring(move.hitDetected)))
+        end
+    end
+
+    if currentCharacter == "KEN" and selectedBox == 2 then
+        local isShippuSegment = true
+        for _, m in ipairs(activeSegment) do
+            if m.move.name ~= "SHIPPU JINRAIKYAKU" then
+                isShippuSegment = false
+                break
+            end
+        end
+        if isShippuSegment then
+            if segmentDelay < 120 then
+                segmentDelay = segmentDelay + 1
+                return
+            else
+                segmentDelay = 0
+            end
         end
     end
 
@@ -503,7 +609,9 @@ function updateGreenFrames()
             if movePressed and moveAddress and (movePressed == moveAddress) then
                 move.greenFrames = greenFrameValues[move.move] or 20
                 move.hitDetected = true
-                if debugMode then print("Move detected: " .. move.move.name) end
+                if debugMode then
+                    print("Move detected: " .. move.move.name)
+                end
             end
         else
             if movePressed and moveAddress and (movePressed == moveAddress) and (hitValue ~= 0) then
@@ -511,7 +619,9 @@ function updateGreenFrames()
                     if move.greenFrames == 0 then
                         move.greenFrames = greenFrameValues[move.move] or 20
                         move.hitDetected = true
-                        if debugMode then print("Move detected: " .. move.move.name) end
+                        if debugMode then 
+                            print("Move detected: " .. move.move.name)
+                        end
                     end
                 end
                 memory.writedword(players[curPlayer] + charOffset[20], 0)
@@ -556,7 +666,14 @@ function updateGreenFrames()
 
     if allMovesGreen and not debugMode then
         if currentCharacter == "AKUMA" then
-            if comboSegment ==  ( (trialComboMoves[currentCharacter][selectedBox].segment2 and 2) or 5) then
+            local maxSegment = 0
+            for segmentName, _ in pairs(segments) do
+                local segNum = tonumber(string.match(segmentName, "%d+"))
+                if segNum and segNum > maxSegment then
+                    maxSegment = segNum
+                end
+            end
+            if comboSegment == maxSegment then
                 comboCompleted = true
                 isStunned = false
                 comboSegment = 1
@@ -577,23 +694,47 @@ function updateGreenFrames()
                 end
             end
         else
-            if comboSegment == 2 then
-                comboCompleted = true
-                isStunned = false
-                comboSegment = 1
-                local file = io.open("combo_trial_completion.txt", "a")
-                if file then
-                    file:write(currentCharacter .. selectedBox .. " = COMPLETED\n")
-                    file:close()
+            if currentCharacter == "KEN" then
+                if comboSegment == 3 then
+                    comboCompleted = true
+                    isStunned = false
+                    comboSegment = 1
+                    local file = io.open("combo_trial_completion.txt", "a")
+                    if file then
+                        file:write(currentCharacter .. selectedBox .. " = COMPLETED\n")
+                        file:close()
+                    end
+                else
+                    comboSegment = comboSegment + 1
+                    isStunned = true
+                    local nextSegment = segments["segment" .. comboSegment]
+                    if nextSegment then
+                        for _, move in ipairs(nextSegment) do
+                            move.greenFrames = 0
+                            move.hitDetected = false
+                        end
+                    end
                 end
             else
-                comboSegment = comboSegment + 1
-                isStunned = true
-                local nextSegment = segments["segment" .. comboSegment]
-                if nextSegment then
-                    for _, move in ipairs(nextSegment) do
-                        move.greenFrames = 0
-                        move.hitDetected = false
+                -- For all other characters, let’s assume trial has 8 segments
+                if comboSegment == 8 then
+                    comboCompleted = true
+                    isStunned = false
+                    comboSegment = 1
+                    local file = io.open("combo_trial_completion.txt", "a")
+                    if file then
+                        file:write(currentCharacter .. selectedBox .. " = COMPLETED\n")
+                        file:close()
+                    end
+                else
+                    comboSegment = comboSegment + 1
+                    isStunned = true
+                    local nextSegment = segments["segment" .. comboSegment]
+                    if nextSegment then
+                        for _, move in ipairs(nextSegment) do
+                            move.greenFrames = 0
+                            move.hitDetected = false
+                        end
                     end
                 end
             end
@@ -608,7 +749,10 @@ function updateGreenFrames()
     end
     local anyActive = false
     for _, move in ipairs(combined) do
-        if move.hitDetected then anyActive = true break end
+        if move.hitDetected then 
+            anyActive = true 
+            break 
+        end
     end
     if not anyActive then 
         resetGreenFrames() 
@@ -629,58 +773,19 @@ function drawDynamicText()
         gui.text(10, 10, string.format("Player Action Address: %08X", personalActionAddress), "yellow")
         gui.text(10, 30, string.format("Current Segment: %d", comboSegment), "yellow")
     end
-    if segments.segment1 then
-        for _, move in ipairs(segments.segment1) do
-            if not move.move.hidden then
-                local xOffset = 10
-                local color = (move.greenFrames > 0) and (debugMode and "yellow" or "green") or "white"
-                if move.move and move.move.name then gui.text(xOffset, yPosition, move.move.name, color)
-                else gui.text(xOffset, yPosition, "Unknown Move", color) end
-                yPosition = yPosition + 10
-            end
-        end
-    end
-    if segments.segment2 then
-        for _, move in ipairs(segments.segment2) do
-            if not move.move.hidden then
-                local xOffset = 10
-                local color = (move.greenFrames > 0) and (debugMode and "yellow" or "green") or "white"
-                if move.move and move.move.name then gui.text(xOffset, yPosition, move.move.name, color)
-                else gui.text(xOffset, yPosition, "Unknown Move", color) end
-                yPosition = yPosition + 10
-            end
-        end
-    end
-    if currentCharacter == "AKUMA" then
-        if segments.segment3 then
-            for _, move in ipairs(segments.segment3) do
+    -- Loop through segments 1 to 8 (adjust as necessary)
+    for i = 1, 8 do
+        local seg = segments["segment" .. i]
+        if seg then
+            for _, move in ipairs(seg) do
                 if not move.move.hidden then
                     local xOffset = 10
                     local color = (move.greenFrames > 0) and (debugMode and "yellow" or "green") or "white"
-                    if move.move and move.move.name then gui.text(xOffset, yPosition, move.move.name, color)
-                    else gui.text(xOffset, yPosition, "Unknown Move", color) end
-                    yPosition = yPosition + 10
-                end
-            end
-        end
-        if segments.segment4 then
-            for _, move in ipairs(segments.segment4) do
-                if not move.move.hidden then
-                    local xOffset = 10
-                    local color = (move.greenFrames > 0) and (debugMode and "yellow" or "green") or "white"
-                    if move.move and move.move.name then gui.text(xOffset, yPosition, move.move.name, color)
-                    else gui.text(xOffset, yPosition, "Unknown Move", color) end
-                    yPosition = yPosition + 10
-                end
-            end
-        end
-        if segments.segment5 then
-            for _, move in ipairs(segments.segment5) do
-                if not move.move.hidden then
-                    local xOffset = 10
-                    local color = (move.greenFrames > 0) and (debugMode and "yellow" or "green") or "white"
-                    if move.move and move.move.name then gui.text(xOffset, yPosition, move.move.name, color)
-                    else gui.text(xOffset, yPosition, "Unknown Move", color) end
+                    if move.move and move.move.name then 
+                        gui.text(xOffset, yPosition, move.move.name, color)
+                    else 
+                        gui.text(xOffset, yPosition, "Unknown Move", color)
+                    end
                     yPosition = yPosition + 10
                 end
             end
