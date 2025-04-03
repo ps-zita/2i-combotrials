@@ -13,6 +13,5 @@ This is a trial combo mod for SF3 Second Impact. Follow the instructions below t
 - [ ] Fix bug with segmenting.
 - [ ] Finish the rest of the trials.
 - [ ] Validate that the Lua script works as expected in FBNeo.
-- [ ] Test the release build thoroughly.
 
 Enjoy!
