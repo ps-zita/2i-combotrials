@@ -15,7 +15,7 @@ This is a trial combo mod for SF3 Second Impact. Follow the instructions below t
 - [ ] Validate that the Lua script works as expected in FBNeo.
 
 ## Contributions
-Thank you to [satalite](sata.li/ght) for helping write hit detection.
+Thank you to [satalight](https://sata.li/ght/) for helping write hit detection.
 
 Thank you to SomethingWithaZ for finding memory addresses.
 
