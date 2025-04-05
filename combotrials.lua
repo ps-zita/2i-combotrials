@@ -55,6 +55,7 @@ local hugoMoonsaultPress   = {name = "MOONSAULT PRESS", address = 102797300}
 -- RYU
 local ryuLK = {name = "LIGHT KICK", address =102433472}
 
+-- moves for the trial, segmenting is done because the trial bugs out if identical moves are done in 1 combo & also because it makes implementing stun combos easier
 local trialComboMoves = {
     ALEX = {
         [1] = {
@@ -116,6 +117,7 @@ local trialComboMoves = {
                 {move = akumaDemon, greenFrames = 0, hitDetected = false},
             }
         },
+        -- test trial for sata, hi sata!!
         [3] = {
             segment1 = {
                 {move = akumaJumpForward, greenFrames = 0, hitDetected = false},
@@ -179,6 +181,7 @@ local trialComboMoves = {
     }
 }
 
+-- greenframes are however many frames a move is registered as a hit for & updated to make the text for combos green
 local greenFrameValues = {
     -- ALEX
     [alexHPFlashChop] = 45,
@@ -397,7 +400,7 @@ function drawCreditPanel()
     drawBox(5, 160, 200, 50)
     local creditText = {
         "made by zizi",
-        "SPECIAL THANKS:",
+        "vesper - writing combos",
         "satalite - help writing hit detection",
         "somethingwithaz - help finding memory addresses",
     }
@@ -533,7 +536,7 @@ local function resetGreenFrames()
     isStunned = false
     segmentDelay = 0  -- reset delay counter
 end
-
+--this is such a fucking mess omg
 function updateGreenFrames()
     if comboCompleted and not isStunned then 
         return 
