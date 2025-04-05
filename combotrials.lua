@@ -1,3 +1,4 @@
+
 local curGame = {[1] = 0x200e504, [2] = 0x200e910, [3] = 0x2010167}
 local players = {curGame[1], curGame[2]}
 local charOffset = {
@@ -9,14 +10,14 @@ local charOffset = {
 local curPlayer = 1
 local PlayerAction = memory.readdword(players[curPlayer] + charOffset[1])
 
--- ALEX moves (unchanged)
+-- ALEX moves
 local alexHPFlashChop = {name = "HEAVY FLASH CHOP", address = 102385716}
 local alexMP = {name = "MEDIUM PUNCH", address = 102349208}
 local alexLPFlashChop = {name = "LIGHT FLASH CHOP", address = 102384844}
 local alexBoomerangRaid = {name = "BOOMERANG RAID", address = 102387828}
 local alexIdle = {name = "IDLE", address = 102302556, hidden = true}
 
--- KEN moves (unchanged)
+-- KEN moves
 local kenJumpForward = {name = "JUMP FORWARD", address = 103369704, hidden = true}
 local kenJMK = {name = "JUMPING MEDIUM KICK", address = 103411512, hiddenMove = kenJumpForward}
 local kenCMP = {name = "CLOSE MEDIUM PUNCH", address = 103403840}
@@ -27,8 +28,6 @@ local kenEXShoryuken = {name = "EX SHORYUKEN", address = 103430076}
 local kenJHP = {name = "JUMPING HEAVY PUNCH", address = 103410856, hiddenMove = kenJumpForward}
 local kenCHP = {name = "CLOSE HEAVY PUNCH", address = 103413664}
 local kenShoryuReppa = {name = "SHORYU REPPA", address = 103432660}
-
--- New Ken moves for combo 2
 local kenLightShoryuken = {name = "LIGHT SHORYUKEN", address = 103429212}
 local kenShippuJinraikyaku = {name = "SHIPPU JINRAIKYAKU", address = 103434300}
 
@@ -36,25 +35,26 @@ local kenShippuJinraikyaku = {name = "SHIPPU JINRAIKYAKU", address = 103434300}
 local akumaJumpForward = {name = "JUMP FORWARD", address = 103596280, hidden = true}
 local akumaDivekick = {name = "DIVEKICK", address = 103638780}
 local akumaCHP = {name = "CLOSE HEAVY PUNCH", address = 103632092}
-local akumaLKTatsu = {name = "LK TATSU", address = 103660928}  -- used for light tatsu
+local akumaTestCHP = {name = "CLOSE HEAVY PUNCH", address = 103632092}
+local akumaLKTatsu = {name = "LK TATSU", address = 103660928}
 local akumaCLP = {name = "CLOSE LIGHT PUNCH", address = 103631116}
 local akumaCMK = {name = "CLOSE MEDIUM KICK", address = 103632780}
 local akumaLP = {name = "LIGHT PUNCH", address = 104000600}
 local akumaCRHP = {name = "CROUCHING HEAVY PUNCH", address = 103633932}
 local akumaKara = {name = "MP KARA", address = 103631804}
 local akumaDemon = {name = "RAGING DEMON", address = 103621536}
-local akumaHTatsu = {name = "HK TATSU", address = 103661824}         -- heavy tatsu
+local akumaHTatsu = {name = "HK TATSU", address = 103661824}
 local akumaJHP = {name = "JUMPING HEAVY PUNCH", address = 103637820, hiddenMove = akumaJumpForward}
 
--- New HUGO moves for trial 1
+-- HUGO
 local hugoMediumUltraThrow = {name = "HEAVY ULTRA THROW", address = 102800188}
 local hugoHeavyPalmBomber  = {name = "HEAVY PALM BOMBER", address = 102846464}
 local hugoMegatonPress     = {name = "MEGATON PRESS", address = 102854024}
 local hugoMoonsaultPress   = {name = "MOONSAULT PRESS", address = 102797300}
 
--- Reorganized trialComboMoves with multi-trial support.
--- For ALEX, KEN, and AKUMA we wrap the single trial in trial number 1 and now add trial 2 for Ken.
--- Also adding HUGO trial 1.
+-- RYU
+local ryuLK = {name = "LIGHT KICK", address =102433472}
+
 local trialComboMoves = {
     ALEX = {
         [1] = {
@@ -116,6 +116,16 @@ local trialComboMoves = {
                 {move = akumaDemon, greenFrames = 0, hitDetected = false},
             }
         },
+        [3] = {
+            segment1 = {
+                {move = akumaJumpForward, greenFrames = 0, hitDetected = false},
+                --ik it says jumpforward here but its actually just his idle animation action
+                {move = akumaTestCHP, greenFrames = 0, hitDetected = false},
+            },
+            segment2 = {
+                {move = akumaTestCHP, greenFrames = 0, hitDetected = false},
+            }
+        },
         [2] = {
             segment1 = {
                 {move = akumaJumpForward, greenFrames = 0, hitDetected = true},
@@ -140,7 +150,7 @@ local trialComboMoves = {
                 {move = akumaKara, greenFrames = 0, hitDetected = false},
                 {move = akumaDemon, greenFrames = 0, hitDetected = false},
             },
-            segment5 = {} -- Extra segment if needed
+            segment5 = {}
         }
     },
     HUGO = {
@@ -187,12 +197,13 @@ local greenFrameValues = {
     [kenCRHP] = 27,
     [kenJHP] = 40,
     [kenCHP] = 30,
-    [kenLightShoryuken] = 120,         -- new value for LIGHT SHORYUKEN
-    [kenShippuJinraikyaku] = 80,        -- new value for SHIPPU JINRAIKYAKU
+    [kenLightShoryuken] = 120,
+    [kenShippuJinraikyaku] = 80,
     -- AKUMA
     [akumaJumpForward] = 1000,
     [akumaDivekick] = 25,
     [akumaCHP] = 35,
+    [akumaTestCHP] = 180,
     [akumaLKTatsu] = 105,
     [akumaCLP] = 40,
     [akumaCMK] = 23,
@@ -202,7 +213,7 @@ local greenFrameValues = {
     [akumaDemon] = 80,
     [akumaHTatsu] = 110,
     [akumaJHP] = 40,
-    -- HUGO (new moves)
+    -- HUGO
     [hugoMediumUltraThrow] = 75,    
     [hugoHeavyPalmBomber]  = 165,       
     [hugoMegatonPress]     = 295,     
@@ -237,15 +248,16 @@ local trialDescriptions = {
         "Cum sociis natoque\nPenatibus et magnis dis\nParturient montes nascetur"
     },
     KEN = {
-        [2] = "stun adds an extra frame of hitstun, this allows \nyou to do cl.mp > cr.hp and ex tatsu > shippu.\ntrial by vesper",
-        [1] = "this one is stupid lmao\ntrial by vesper"
+        [1] = "stun adds an extra frame of hitstun, this allows \nyou to do cl.mp > cr.hp and ex tatsu > shippu.\ntrial by vesper",
+        [2] = "this one is stupid lmao\ntrial by vesper"
     },
     HUGO = {
         [1] = "this character fucking sucks\nthis trial is also kinda broken"
     },
     AKUMA = {
         [2] = "light punch in a juggle against a stunned gill\nallows for the next move to restand",
-        [1] = "normal corner bnb but the reset > kara demon\nis only a true combo on hugo"
+        [1] = "normal corner bnb but the reset > kara demon\nis only a true combo on hugo",
+        [3] = "test trial fur sata :)"
     }
 }
 for _, char in ipairs(characters) do
@@ -271,7 +283,6 @@ debugMessage = ""
 debugTimer = 0
 debugMode = false
 
--- New variable for segment delay (for each combo move update)
 local segmentDelay = 0
 
 guiinputs = { P1 = {previousinputs = {}} }
@@ -405,7 +416,6 @@ function loadCharacterTrial(char, trial)
     showDebug("Loading savestate...")
     menuVisible = false
     currentCharacter = char
-    -- For Ken's trial 2, load both ken2.fs and ken2.fr
     if char == "KEN" and trial == 2 then
         local fsFilename = "ken2.fs"
         local frFilename = "ken2.fr"
@@ -547,7 +557,6 @@ function updateGreenFrames()
             activeSegment = segments.segment5
         end
     else
-        -- Manually check segments for non-AKUMA characters (e.g., HUGO)
         if comboSegment == 1 then
             activeSegment = segments.segment1
         elseif comboSegment == 2 then
@@ -716,7 +725,6 @@ function updateGreenFrames()
                     end
                 end
             else
-                -- For all other characters, let’s assume trial has 8 segments
                 if comboSegment == 8 then
                     comboCompleted = true
                     isStunned = false
@@ -773,7 +781,6 @@ function drawDynamicText()
         gui.text(10, 10, string.format("Player Action Address: %08X", personalActionAddress), "yellow")
         gui.text(10, 30, string.format("Current Segment: %d", comboSegment), "yellow")
     end
-    -- Loop through segments 1 to 8 (adjust as necessary)
     for i = 1, 8 do
         local seg = segments["segment" .. i]
         if seg then
