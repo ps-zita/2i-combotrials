@@ -1,3 +1,4 @@
+-- importing bitwise operations library
 local bit = require("bit")
 
 local curGame = {[1] = 0x200e504, [2] = 0x200e910, [3] = 0x2010167}
@@ -56,6 +57,15 @@ local hugoMoonsaultPress   = {name = "MOONSAULT PRESS", address = 102797300}
 -- RYU
 local ryuLK = {name = "LIGHT KICK", address =102433472}
 
+-- SEAN moves
+local seanIDLE = {name = "IDLE", address = 103441548, hidden = true}
+local seanCLP = {name = "CLOSE LIGHT PUNCH", address = 103477692}
+local seanTaunt = {name = "TAUNT", address = 103518820}
+local seanCHK = {name = "CLOSE HEAVY KICK", address = 103479420}
+local seanCRMK = {name = "CROUCHING MEDIUM KICK", address = 103480948}
+local seanEXTatsu = {name = "EX TATSU", address = 103507204}
+local seanHadouBurst = {name = "HADOU BURST", address = 104010050}
+
 -- moves for the trial, segmenting is done because the trial bugs out if identical moves are done in 1 combo & also because it makes implementing stun combos easier
 local trialComboMoves = {
     ALEX = {
@@ -97,10 +107,8 @@ local trialComboMoves = {
             },
             segment2 = {
                 {move = kenShippuJinraikyaku, greenFrames = 0, hitDetected = false},
-            },
-            segment3 = {
-                {move = kenShippuJinraikyaku, greenFrames = 0, hitDetected = false},
-            },
+                {move = kenLightShoryuken, greenFrames = 0, hitDetected = false},
+            }
         },
     },
     AKUMA = {
@@ -180,6 +188,26 @@ local trialComboMoves = {
                 {move = hugoMoonsaultPress, greenFrames = 0, hitDetected = false},
             },
         }
+    },
+    SEAN = {
+        [1] = {
+            segment1 = {
+                {move = seanEXTatsu, greenFrames = 0, hitDetected = false},
+                {move = seanCRMK,    greenFrames = 0, hitDetected = false},
+            },
+            segment2 = {
+                {move = seanEXTatsu, greenFrames = 0, hitDetected = false},
+                {move = seanCRMK,    greenFrames = 0, hitDetected = false},
+            },
+            segment3 = {
+                {move = seanEXTatsu, greenFrames = 0, hitDetected = false},
+                {move = seanCRMK,    greenFrames = 0, hitDetected = false},
+            },
+            segment4 = {
+                {move = seanEXTatsu,  greenFrames = 0, hitDetected = false},
+                {move = seanHadouBurst, greenFrames = 0, hitDetected = false},
+            },
+        }
     }
 }
 
@@ -222,7 +250,14 @@ local greenFrameValues = {
     [hugoMediumUltraThrow] = 75,    
     [hugoHeavyPalmBomber]  = 165,       
     [hugoMegatonPress]     = 295,     
-    [hugoMoonsaultPress]   = 105       
+    [hugoMoonsaultPress]   = 105,
+    -- SEAN
+    [seanCLP] = 40,
+    [seanTaunt] = 50,
+    [seanCHK] = 35,
+    [seanCRMK] = 45,
+    [seanEXTatsu] = 70,
+    [seanHadouBurst] = 90
 }
 
 COLORS = {
@@ -668,12 +703,35 @@ function updateGreenFrames()
             end
         else
             if movePressed and moveAddress and (movePressed == moveAddress) and (hitValue ~= 0) then
-                if i == 1 or (activeSegment[i - 1] and activeSegment[i - 1].greenFrames > 0) then
-                    if move.greenFrames == 0 then
-                        move.greenFrames = greenFrameValues[move.move] or 20
-                        move.hitDetected = true
-                        if debugMode then 
-                            print("Move detected: " .. move.move.name)
+                if currentCharacter == "SEAN" and move.move.name == "CLOSE LIGHT PUNCH" then
+                    -- Process the CLOSE LIGHT PUNCH hit as usual.
+                    if i == 1 or (activeSegment[i - 1] and activeSegment[i - 1].greenFrames > 0) then
+                        if move.greenFrames == 0 then
+                            move.greenFrames = greenFrameValues[move.move] or 20
+                            move.hitDetected = true
+                            if debugMode then 
+                                print("Move detected: " .. move.move.name)
+                            end
+                        end
+                    end
+                    -- Automatically mark TAUNT as hit
+                    for _, other in ipairs(activeSegment) do
+                        if other.move.name == "TAUNT" then
+                            other.greenFrames = greenFrameValues[other.move] or 20
+                            other.hitDetected = true
+                            if debugMode then 
+                                print("Automatically marking TAUNT as hit.")
+                            end
+                        end
+                    end
+                else
+                    if i == 1 or (activeSegment[i - 1] and activeSegment[i - 1].greenFrames > 0) then
+                        if move.greenFrames == 0 then
+                            move.greenFrames = greenFrameValues[move.move] or 20
+                            move.hitDetected = true
+                            if debugMode then 
+                                print("Move detected: " .. move.move.name)
+                            end
                         end
                     end
                 end
@@ -851,6 +909,11 @@ function mainLoop()
         if savestateLoaded then 
             drawDynamicText() 
         end
+    end
+
+    -- Force player 2's "Down" input when playing SEAN trial 1
+    if currentCharacter == "SEAN" and selectedBox == 1 then
+        joypad.set({["P2 Down"] = true}, 2)
     end
 end
 
