@@ -1,3 +1,5 @@
+local bit = require("bit")
+
 local curGame = {[1] = 0x200e504, [2] = 0x200e910, [3] = 0x2010167}
 local players = {curGame[1], curGame[2]}
 local charOffset = {
@@ -45,23 +47,14 @@ local akumaDemon = {name = "RAGING DEMON", address = 103621536}
 local akumaHTatsu = {name = "HK TATSU", address = 103661824}
 local akumaJHP = {name = "JUMPING HEAVY PUNCH", address = 103637820, hiddenMove = akumaJumpForward}
 
--- HUGO moves
+-- HUGO
 local hugoMediumUltraThrow = {name = "HEAVY ULTRA THROW", address = 102800188}
 local hugoHeavyPalmBomber  = {name = "HEAVY PALM BOMBER", address = 102846464}
 local hugoMegatonPress     = {name = "MEGATON PRESS", address = 102854024}
 local hugoMoonsaultPress   = {name = "MOONSAULT PRESS", address = 102797300}
 
--- RYU moves
+-- RYU
 local ryuLK = {name = "LIGHT KICK", address =102433472}
-
--- SEAN moves
-local seanIDLE = {name = "IDLE", address = 103441548, hidden = true}
-local seanCLP = {name = "CLOSE LIGHT PUNCH", address = 103477692}
-local seanTaunt = {name = "TAUNT", address = 103518820}
-local seanCHK = {name = "CLOSE HEAVY KICK", address = 103479420}
-local seanCRMK = {name = "CROUCHING MEDIUM KICK", address = 103480948}
-local seanEXTatsu = {name = "EX TATSU", address = 103507204}
-local seanHadouBurst = {name = "HADOU BURST", address = 104010050}
 
 -- moves for the trial, segmenting is done because the trial bugs out if identical moves are done in 1 combo & also because it makes implementing stun combos easier
 local trialComboMoves = {
@@ -104,7 +97,9 @@ local trialComboMoves = {
             },
             segment2 = {
                 {move = kenShippuJinraikyaku, greenFrames = 0, hitDetected = false},
-                {move = kenLightShoryuken, greenFrames = 0, hitDetected = false},
+            },
+            segment3 = {
+                {move = kenShippuJinraikyaku, greenFrames = 0, hitDetected = false},
             },
         },
     },
@@ -124,6 +119,7 @@ local trialComboMoves = {
             }
         },
         -- test trial for sata, hi sata!!
+        -- HIHI TOUCH !!
         [3] = {
             segment1 = {
                 {move = akumaJumpForward, greenFrames = 0, hitDetected = false},
@@ -184,26 +180,6 @@ local trialComboMoves = {
                 {move = hugoMoonsaultPress, greenFrames = 0, hitDetected = false},
             },
         }
-    },
-    SEAN = {
-        [1] = {
-            segment1 = {
-                {move = seanEXTatsu, greenFrames = 0, hitDetected = false},
-                {move = seanCRMK,    greenFrames = 0, hitDetected = false},
-            },
-            segment2 = {
-                {move = seanEXTatsu, greenFrames = 0, hitDetected = false},
-                {move = seanCRMK,    greenFrames = 0, hitDetected = false},
-            },
-            segment3 = {
-                {move = seanEXTatsu, greenFrames = 0, hitDetected = false},
-                {move = seanCRMK,    greenFrames = 0, hitDetected = false},
-            },
-            segment4 = {
-                {move = seanEXTatsu,  greenFrames = 0, hitDetected = false},
-                {move = seanHadouBurst, greenFrames = 0, hitDetected = false},
-            },
-        }
     }
 }
 
@@ -246,14 +222,7 @@ local greenFrameValues = {
     [hugoMediumUltraThrow] = 75,    
     [hugoHeavyPalmBomber]  = 165,       
     [hugoMegatonPress]     = 295,     
-    [hugoMoonsaultPress]   = 105,
-    -- SEAN
-    [seanCLP] = 40,
-    [seanTaunt] = 50,
-    [seanCHK] = 35,
-    [seanCRMK] = 45,
-    [seanEXTatsu] = 70,
-    [seanHadouBurst] = 90
+    [hugoMoonsaultPress]   = 105       
 }
 
 COLORS = {
@@ -304,24 +273,24 @@ for _, char in ipairs(characters) do
     end
 end
 
-selectedChar = 1
-selectedBox = 1
-menuVisible = true
-savestateLoaded = false
-firstFrame = true
-buttonPressed = false
-inputBlockFrames = 0
-BLOCK_FRAMES = 30
-pendingSavestate = false
-startHoldFrames = 0
-START_HOLD_THRESHOLD = 30
-debugMessage = ""
-debugTimer = 0
-debugMode = false
+local selectedChar = 1
+local selectedBox = 1
+local menuVisible = true
+local savestateLoaded = false
+local firstFrame = true
+local buttonPressed = false
+local inputBlockFrames = 0
+local BLOCK_FRAMES = 30
+local pendingSavestate = false
+local startHoldFrames = 0
+local START_HOLD_THRESHOLD = 30
+local debugMessage = ""
+local debugTimer = 0
+local debugMode = false
 
 local segmentDelay = 0
 
-guiinputs = { P1 = {previousinputs = {}} }
+local guiinputs = { P1 = {previousinputs = {}} }
 
 local buttonMappings = {
     [1] = "P1 Light Punch",
@@ -342,22 +311,61 @@ function drawText(x, y, text, color)
     gui.text(x, y, text, color or COLORS.text)
 end
 
-function readTrialCompletionStatus()
-    local file = io.open("combo_trial_completion.txt", "r")
-    if not file then return {} end
-    local status = {}
-    for line in file:lines() do
-        local char, trial = line:match("^(%w+)(%d+) = COMPLETED$")
-        if char and trial then
-            if not status[char] then status[char] = {} end
-            status[char][tonumber(trial)] = true
-        end
+function pullSave()
+    local file = io.open("combo_trial_completion.bin", "r")
+
+    if file == nil then
+        local temp = assert(io.open("combo_trial_completion.bin", "w"))
+        temp:write(0)
+        temp:close()
+        
+        return 0
     end
+
+    local data = file:read("*all")
     file:close()
-    return status
+    data = tonumber(data)
+
+    return data
 end
 
-local trialStatus = {}
+function readTrialStatus(data, charIndex, trialIndex)
+    local index = toBinaryIndex(charIndex, trialIndex)
+
+    if (bit.band(data, index) == index) then
+        return true
+    end
+
+    return false
+end
+
+function writeTrialCompletion(currentCharacter, trialIndex)
+    -- get data
+    local data = pullSave()
+
+    -- edit data to flip trial bit flag
+    data = bit.bor(data, toBinaryIndex(toCharIndex(currentCharacter), trialIndex))
+
+    -- open file, save, close file
+    local file = assert(io.open("combo_trial_completion.bin", "w"))
+    file:write(data)
+    file:close()
+end
+
+-- converts to bitflag index https://pressbooks.lib.jmu.edu/programmingpatterns/chapter/bitflags/
+function toBinaryIndex(charIndex, trialIndex)
+    return 2 ^ (((charIndex - 1) * 10) + (trialIndex - 1))
+end
+
+function toCharIndex(findchar)
+    for index, char in ipairs(characters) do
+        if char == findchar then
+            return index
+        end
+    end
+    
+    return nil
+end
 
 function drawBox(x, y, width, height, isSelected, isCompleted)
     local outline = isSelected and COLORS.highlight or COLORS.box
@@ -370,12 +378,12 @@ function drawTrialBoxes(x, y, charIndex)
     local boxHeight = 5
     local spacing = 2
     local startX = x + 35
-    local char = characters[charIndex]
-    local charStatus = trialStatus[char] or {}
+    local data = pullSave()
+
     for i = 1, 10 do
         local boxX = startX + ((boxWidth + spacing) * (i - 1))
         local isSelected = (charIndex == selectedChar) and (i == selectedBox)
-        local isCompleted = charStatus[i] or false
+        local isCompleted = readTrialStatus(data, charIndex, i)
         drawBox(boxX, y, boxWidth, boxHeight, isSelected, isCompleted)
     end
 end
@@ -399,7 +407,6 @@ function drawTrialExplanation()
 end
 
 function drawCharacterPanel()
-    trialStatus = readTrialCompletionStatus()
     local panelWidth = 120
     local panelX = emu.screenwidth() - panelWidth - 5
     local itemHeight = 10
@@ -434,7 +441,7 @@ function drawCreditPanel()
     local creditText = {
         "made by zizi",
         "vesper - writing combos",
-        "satalite - help writing hit detection",
+        "satalight - help writing hit detection",
         "somethingwithaz - help finding memory addresses",
     }
     for i, line in ipairs(creditText) do
@@ -569,6 +576,7 @@ local function resetGreenFrames()
     isStunned = false
     segmentDelay = 0  -- reset delay counter
 end
+
 --this is such a fucking mess omg
 function updateGreenFrames()
     if comboCompleted and not isStunned then 
@@ -660,35 +668,12 @@ function updateGreenFrames()
             end
         else
             if movePressed and moveAddress and (movePressed == moveAddress) and (hitValue ~= 0) then
-                if currentCharacter == "SEAN" and move.move.name == "CLOSE LIGHT PUNCH" then
-                    -- Process the CLOSE LIGHT PUNCH hit as usual.
-                    if i == 1 or (activeSegment[i - 1] and activeSegment[i - 1].greenFrames > 0) then
-                        if move.greenFrames == 0 then
-                            move.greenFrames = greenFrameValues[move.move] or 20
-                            move.hitDetected = true
-                            if debugMode then 
-                                print("Move detected: " .. move.move.name)
-                            end
-                        end
-                    end
-                    -- Automatically mark TAUNT as hit
-                    for _, other in ipairs(activeSegment) do
-                        if other.move.name == "TAUNT" then
-                            other.greenFrames = greenFrameValues[other.move] or 20
-                            other.hitDetected = true
-                            if debugMode then 
-                                print("Automatically marking TAUNT as hit.")
-                            end
-                        end
-                    end
-                else
-                    if i == 1 or (activeSegment[i - 1] and activeSegment[i - 1].greenFrames > 0) then
-                        if move.greenFrames == 0 then
-                            move.greenFrames = greenFrameValues[move.move] or 20
-                            move.hitDetected = true
-                            if debugMode then 
-                                print("Move detected: " .. move.move.name)
-                            end
+                if i == 1 or (activeSegment[i - 1] and activeSegment[i - 1].greenFrames > 0) then
+                    if move.greenFrames == 0 then
+                        move.greenFrames = greenFrameValues[move.move] or 20
+                        move.hitDetected = true
+                        if debugMode then 
+                            print("Move detected: " .. move.move.name)
                         end
                     end
                 end
@@ -745,11 +730,7 @@ function updateGreenFrames()
                 comboCompleted = true
                 isStunned = false
                 comboSegment = 1
-                local file = io.open("combo_trial_completion.txt", "a")
-                if file then
-                    file:write(currentCharacter .. selectedBox .. " = COMPLETED\n")
-                    file:close()
-                end
+                writeTrialCompletion(currentCharacter, selectedBox)
             else
                 comboSegment = comboSegment + 1
                 isStunned = true
@@ -767,11 +748,7 @@ function updateGreenFrames()
                     comboCompleted = true
                     isStunned = false
                     comboSegment = 1
-                    local file = io.open("combo_trial_completion.txt", "a")
-                    if file then
-                        file:write(currentCharacter .. selectedBox .. " = COMPLETED\n")
-                        file:close()
-                    end
+                    writeTrialCompletion(currentCharacter, selectedBox)
                 else
                     comboSegment = comboSegment + 1
                     isStunned = true
@@ -788,11 +765,7 @@ function updateGreenFrames()
                     comboCompleted = true
                     isStunned = false
                     comboSegment = 1
-                    local file = io.open("combo_trial_completion.txt", "a")
-                    if file then
-                        file:write(currentCharacter .. selectedBox .. " = COMPLETED\n")
-                        file:close()
-                    end
+                    writeTrialCompletion(currentCharacter, selectedBox)
                 else
                     comboSegment = comboSegment + 1
                     isStunned = true
@@ -841,7 +814,7 @@ function drawDynamicText()
         gui.text(10, 30, string.format("Current Segment: %d", comboSegment), "yellow")
     end
     for i = 1, 8 do
-        local seg = segments["segment " .. i] or segments["segment" .. i]
+        local seg = segments["segment" .. i]
         if seg then
             for _, move in ipairs(seg) do
                 if not move.move.hidden then
@@ -878,11 +851,6 @@ function mainLoop()
         if savestateLoaded then 
             drawDynamicText() 
         end
-    end
-
-    -- Force player 2's "Down" input when playing SEAN trial 1
-    if currentCharacter == "SEAN" and selectedBox == 1 then
-        joypad.set({["P2 Down"] = true}, 2)
     end
 end
 
