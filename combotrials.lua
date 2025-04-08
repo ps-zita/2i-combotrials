@@ -472,11 +472,11 @@ function drawHelpPanel()
 end
 
 function drawCreditPanel()
-    drawBox(5, 160, 200, 50)
+    drawBox(5, 160, 374, 50)
     local creditText = {
         "made by zizi",
         "vesper - writing combos",
-        "satalight - help writing hit detection",
+        "satalight - help with hit detection, debugging & savedata implementation",
         "somethingwithaz - help finding memory addresses",
     }
     for i, line in ipairs(creditText) do
@@ -776,64 +776,26 @@ function updateGreenFrames()
     end
 
     if allMovesGreen and not debugMode then
-        if currentCharacter == "AKUMA" then
-            local maxSegment = 0
-            for segmentName, _ in pairs(segments) do
-                local segNum = tonumber(string.match(segmentName, "%d+"))
-                if segNum and segNum > maxSegment then
-                    maxSegment = segNum
-                end
+        local maxSegment = 0
+        for segmentName, _ in pairs(segments) do
+            local segNum = tonumber(string.match(segmentName, "%d+"))
+            if segNum and segNum > maxSegment then
+                maxSegment = segNum
             end
-            if comboSegment == maxSegment then
-                comboCompleted = true
-                isStunned = false
-                comboSegment = 1
-                writeTrialCompletion(currentCharacter, selectedBox)
-            else
-                comboSegment = comboSegment + 1
-                isStunned = true
-                local nextSegment = segments["segment" .. comboSegment]
-                if nextSegment then
-                    for _, move in ipairs(nextSegment) do
-                        move.greenFrames = 0
-                        move.hitDetected = false
-                    end
-                end
-            end
+        end
+        if comboSegment == maxSegment then
+            comboCompleted = true
+            isStunned = false
+            comboSegment = 1
+            writeTrialCompletion(currentCharacter, selectedBox)
         else
-            if currentCharacter == "KEN" then
-                if comboSegment == 3 then
-                    comboCompleted = true
-                    isStunned = false
-                    comboSegment = 1
-                    writeTrialCompletion(currentCharacter, selectedBox)
-                else
-                    comboSegment = comboSegment + 1
-                    isStunned = true
-                    local nextSegment = segments["segment" .. comboSegment]
-                    if nextSegment then
-                        for _, move in ipairs(nextSegment) do
-                            move.greenFrames = 0
-                            move.hitDetected = false
-                        end
-                    end
-                end
-            else
-                if comboSegment == 8 then
-                    comboCompleted = true
-                    isStunned = false
-                    comboSegment = 1
-                    writeTrialCompletion(currentCharacter, selectedBox)
-                else
-                    comboSegment = comboSegment + 1
-                    isStunned = true
-                    local nextSegment = segments["segment" .. comboSegment]
-                    if nextSegment then
-                        for _, move in ipairs(nextSegment) do
-                            move.greenFrames = 0
-                            move.hitDetected = false
-                        end
-                    end
+            comboSegment = comboSegment + 1
+            isStunned = true
+            local nextSegment = segments["segment" .. comboSegment]
+            if nextSegment then
+                for _, move in ipairs(nextSegment) do
+                    move.greenFrames = 0
+                    move.hitDetected = false
                 end
             end
         end
