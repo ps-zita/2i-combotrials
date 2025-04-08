@@ -15,6 +15,7 @@ This is a trial combo mod for SF3 Second Impact. Follow the instructions below t
 - [x] Fix savedata implementation (ty sata).
 - [ ] Divide the savedata bitmap into groups for each individual character.
 - [ ] Add a data subfolder with the savestates, a moves.json with their memory addresses & a combo.json for each character with the combo instead of hardcoding it in the main lua.
+- [ ] Fix hit detection for sean taunt.
 
 ## Contributions
 Thank you to [satalight](https://sata.li/ght/) for help debugging & help with writing hit detection & savedata implementation.
