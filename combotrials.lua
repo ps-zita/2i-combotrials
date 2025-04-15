@@ -1,8 +1,50 @@
--- importing bitwise operations library
 local bit = require("bit")
+local json = require("dkjson")
 
-local curGame = {[1] = 0x200e504, [2] = 0x200e910, [3] = 0x2010167}
-local players = {curGame[1], curGame[2]}
+-- Helper function to load and decode a JSON file.
+local function loadJSONFile(path)
+    local file = io.open(path, "r")
+    if file then 
+        local content = file:read("*a")
+        file:close()
+        local obj, pos, err = json.decode(content)
+        if err then
+            print("JSON decode error in file " .. path .. ": " .. err)
+        end
+        return obj
+    else
+        print("Error: Could not open file " .. path)
+        return nil
+    end
+end
+
+local movesData = {}
+local trialsData = {}
+local characters = {
+    "ALEX", "AKUMA", "DUDLEY", "ELENA", "HUGO", "IBUKI", "KEN", "NECRO",
+    "ORO", "RYU", "SEAN", "URIEN", "YANG", "YUN"
+}
+for _, char in ipairs(characters) do
+    local mfile = "moves/" .. string.lower(char) .. ".json"
+    local tfile = "trials/" .. string.lower(char) .. ".json"
+    movesData[char] = loadJSONFile(mfile)
+    trialsData[char] = loadJSONFile(tfile)
+    if (not trialsData[char]) and char ~= "ALEX" then
+        trialsData[char] = loadJSONFile("trials/alex.json")
+    end
+end
+
+local trialComboMoves = trialsData
+
+-- Define globals used for hit detection
+local comboSegment = 1
+local comboCompleted = false
+local isStunned = false
+local segmentDelay = 0
+
+-- Standard emulator setup
+local curGame = { [1] = 0x200e504, [2] = 0x200e910, [3] = 0x2010167 }
+local players = { curGame[1], curGame[2] }
 local charOffset = {
     [1] = 0x1c0, [2] = 0x1c4, [3] = 0x1cc, [4] = 0x1da, [5] = 0x1dc,
     [6] = 0x1de, [7] = 0x25c, [8] = 0x260, [9] = 0x284, [10] = 0x288,
@@ -12,254 +54,7 @@ local charOffset = {
 local curPlayer = 1
 local PlayerAction = memory.readdword(players[curPlayer] + charOffset[1])
 
--- ALEX moves
-local alexHPFlashChop = {name = "HEAVY FLASH CHOP", address = 102385716}
-local alexMP = {name = "MEDIUM PUNCH", address = 102349208}
-local alexLPFlashChop = {name = "LIGHT FLASH CHOP", address = 102384844}
-local alexBoomerangRaid = {name = "BOOMERANG RAID", address = 102387828}
-local alexIdle = {name = "IDLE", address = 102302556, hidden = true}
-
--- KEN moves
-local kenJumpForward = {name = "JUMP FORWARD", address = 103369704, hidden = true}
-local kenJMK = {name = "JUMPING MEDIUM KICK", address = 103411512, hiddenMove = kenJumpForward}
-local kenCMP = {name = "CLOSE MEDIUM PUNCH", address = 103403840}
-local kenCRHP = {name = "CROUCHING HEAVY PUNCH", address = 103406544}
-local kenEXTatsu = {name = "EX TATSU", address = 103432044}
-local kenEXTatsu2 = {name = "EX TATSU", address = 103432044}
-local kenEXShoryuken = {name = "EX SHORYUKEN", address = 103430076}
-local kenJHP = {name = "JUMPING HEAVY PUNCH", address = 103410856, hiddenMove = kenJumpForward}
-local kenCHP = {name = "CLOSE HEAVY PUNCH", address = 103413664}
-local kenShoryuReppa = {name = "SHORYU REPPA", address = 103432660}
-local kenLightShoryuken = {name = "LIGHT SHORYUKEN", address = 103429212}
-local kenShippuJinraikyaku = {name = "SHIPPU JINRAIKYAKU", address = 103434300}
-
--- AKUMA moves
-local akumaJumpForward = {name = "JUMP FORWARD", address = 103596280, hidden = true}
-local akumaDivekick = {name = "DIVEKICK", address = 103638780}
-local akumaCHP = {name = "CLOSE HEAVY PUNCH", address = 103632092}
-local akumaTestCHP = {name = "CLOSE HEAVY PUNCH", address = 103632092}
-local akumaLKTatsu = {name = "LK TATSU", address = 103660928}
-local akumaCLP = {name = "CLOSE LIGHT PUNCH", address = 103631116}
-local akumaCMK = {name = "CLOSE MEDIUM KICK", address = 103632780}
-local akumaLP = {name = "LIGHT PUNCH", address = 104000600}
-local akumaCRHP = {name = "CROUCHING HEAVY PUNCH", address = 103633932}
-local akumaKara = {name = "MP KARA", address = 103631804}
-local akumaDemon = {name = "RAGING DEMON", address = 103621536}
-local akumaHTatsu = {name = "HK TATSU", address = 103661824}
-local akumaJHP = {name = "JUMPING HEAVY PUNCH", address = 103637820, hiddenMove = akumaJumpForward}
-
--- HUGO
-local hugoMediumUltraThrow = {name = "HEAVY ULTRA THROW", address = 102800188}
-local hugoHeavyPalmBomber  = {name = "HEAVY PALM BOMBER", address = 102846464}
-local hugoMegatonPress     = {name = "MEGATON PRESS", address = 102854024}
-local hugoMoonsaultPress   = {name = "MOONSAULT PRESS", address = 102797300}
-
--- RYU
-local ryuLK = {name = "LIGHT KICK", address =102433472}
-
--- SEAN moves
-local seanIDLE = {name = "IDLE", address = 103441548, hidden = true}
-local seanCLP = {name = "CLOSE LIGHT PUNCH", address = 103477692}
-local seanTaunt = {name = "TAUNT", address = 103518820}
-local seanCHK = {name = "CLOSE HEAVY KICK", address = 103479420}
-local seanCRMK = {name = "CROUCHING MEDIUM KICK", address = 103480948}
-local seanEXTatsu = {name = "EX TATSU", address = 103507204}
-local seanHadouBurst = {name = "HADOU BURST", address = 104010050}
-
--- moves for the trial, segmenting is done because the trial bugs out if identical moves are done in 1 combo & also because it makes implementing stun combos easier
-local trialComboMoves = {
-    ALEX = {
-        [1] = {
-            segment1 = {
-                {move = alexIdle, greenFrames = 1000, hitDetected = true},
-            },
-            segment2 = {
-                {move = alexHPFlashChop, greenFrames = 0, hitDetected = false},
-                {move = alexMP, greenFrames = 0, hitDetected = false},
-                {move = alexLPFlashChop, greenFrames = 0, hitDetected = false},
-                {move = alexBoomerangRaid, greenFrames = 0, hitDetected = false},
-            }
-        }
-    },
-    KEN = {
-        [1] = {
-            segment1 = {
-                {move = kenJumpForward, greenFrames = 0, hitDetected = true},
-                {move = kenJMK, greenFrames = 0, hitDetected = false},
-                {move = kenCMP, greenFrames = 0, hitDetected = false},
-                {move = kenCRHP, greenFrames = 0, hitDetected = false},
-                {move = kenEXTatsu, greenFrames = 0, hitDetected = false},
-                {move = kenEXShoryuken, greenFrames = 0, hitDetected = false},
-            },
-            segment2 = {
-                {move = kenJumpForward, greenFrames = 0, hitDetected = false},
-                {move = kenJHP, greenFrames = 0, hitDetected = false},
-                {move = kenCMP, greenFrames = 0, hitDetected = false},
-                {move = kenCHP, greenFrames = 0, hitDetected = false},
-                {move = kenEXTatsu2, greenFrames = 0, hitDetected = false},
-                {move = kenShoryuReppa, greenFrames = 0, hitDetected = false},
-            }
-        },
-        [2] = {
-            segment1 = {
-                {move = kenLightShoryuken, greenFrames = 0, hitDetected = false},
-                {move = kenShippuJinraikyaku, greenFrames = 0, hitDetected = false},
-            },
-            segment2 = {
-                {move = kenShippuJinraikyaku, greenFrames = 0, hitDetected = false},
-                {move = kenLightShoryuken, greenFrames = 0, hitDetected = false},
-            }
-        },
-    },
-    AKUMA = {
-        [1] = {
-            segment1 = {
-                {move = akumaJumpForward, greenFrames = 0, hitDetected = false},
-                {move = akumaDivekick, greenFrames = 0, hitDetected = false},
-                {move = akumaCHP, greenFrames = 0, hitDetected = false},
-                {move = akumaLKTatsu, greenFrames = 0, hitDetected = false},
-                {move = akumaHTatsu, greenFrames = 0, hitDetected = false},
-                {move = akumaJHP, greenFrames = 0, hitDetected = false},
-            },
-            segment2 = {
-                {move = akumaKara, greenFrames = 0, hitDetected = false},
-                {move = akumaDemon, greenFrames = 0, hitDetected = false},
-            }
-        },
-        -- test trial for sata, hi sata!!
-        -- HIHI TOUCH !!
-        [3] = {
-            segment1 = {
-                {move = akumaJumpForward, greenFrames = 0, hitDetected = false},
-                --ik it says jumpforward here but its actually just his idle animation action
-                {move = akumaTestCHP, greenFrames = 0, hitDetected = false},
-            },
-            segment2 = {
-                {move = akumaTestCHP, greenFrames = 0, hitDetected = false},
-            }
-        },
-        [2] = {
-            segment1 = {
-                {move = akumaJumpForward, greenFrames = 0, hitDetected = true},
-                {move = akumaDivekick, greenFrames = 0, hitDetected = false},
-                {move = akumaCHP, greenFrames = 0, hitDetected = false},
-                {move = akumaLKTatsu, greenFrames = 0, hitDetected = false},
-            },
-            segment2 = {
-                {move = akumaJumpForward, greenFrames = 0, hitDetected = true},
-                {move = akumaCLP, greenFrames = 0, hitDetected = false},
-                {move = akumaCRHP, greenFrames = 0, hitDetected = false},
-                {move = akumaLKTatsu, greenFrames = 0, hitDetected = false},
-            },
-            segment3 = {
-                {move = akumaCLP, greenFrames = 0, hitDetected = false},
-                {move = akumaDivekick, greenFrames = 0, hitDetected = false},
-                {move = akumaCMK, greenFrames = 0, hitDetected = false},
-                {move = akumaLKTatsu, greenFrames = 0, hitDetected = false},
-            },
-            segment4 = {
-                {move = akumaCLP, greenFrames = 0, hitDetected = false},
-                {move = akumaKara, greenFrames = 0, hitDetected = false},
-                {move = akumaDemon, greenFrames = 0, hitDetected = false},
-            },
-            segment5 = {}
-        }
-    },
-    HUGO = {
-        [1] = {
-            segment1 = {
-                {move = hugoMediumUltraThrow, greenFrames = 0, hitDetected = false},
-                {move = hugoHeavyPalmBomber,  greenFrames = 0, hitDetected = false},
-            },
-            segment2 = {
-                {move = hugoHeavyPalmBomber, greenFrames = 0, hitDetected = false},
-            },
-            segment3 = {
-                {move = hugoHeavyPalmBomber, greenFrames = 0, hitDetected = false},
-            },
-            segment4 = {
-                {move = hugoHeavyPalmBomber, greenFrames = 0, hitDetected = false},
-            },
-            segment5 = {
-                {move = hugoHeavyPalmBomber, greenFrames = 0, hitDetected = false},
-            },
-            segment6 = {
-                {move = hugoMegatonPress,   greenFrames = 0, hitDetected = false},
-                {move = hugoMoonsaultPress, greenFrames = 0, hitDetected = false},
-            },
-        }
-    },
-    SEAN = {
-        [1] = {
-            segment1 = {
-                {move = seanEXTatsu, greenFrames = 0, hitDetected = false},
-                {move = seanCRMK,    greenFrames = 0, hitDetected = false},
-            },
-            segment2 = {
-                {move = seanEXTatsu, greenFrames = 0, hitDetected = false},
-                {move = seanCRMK,    greenFrames = 0, hitDetected = false},
-            },
-            segment3 = {
-                {move = seanEXTatsu, greenFrames = 0, hitDetected = false},
-                {move = seanCRMK,    greenFrames = 0, hitDetected = false},
-            },
-            segment4 = {
-                {move = seanEXTatsu,  greenFrames = 0, hitDetected = false},
-                {move = seanHadouBurst, greenFrames = 0, hitDetected = false},
-            },
-        }
-    }
-}
-
--- greenframes are however many frames a move is registered as a hit for & updated to make the text for combos green
-local greenFrameValues = {
-    -- ALEX
-    [alexHPFlashChop] = 45,
-    [alexMP] = 60,
-    [alexLPFlashChop] = 77,
-    [alexBoomerangRaid] = 100,
-    [alexIdle] = 1000,
-    -- KEN
-    [kenJumpForward] = 1000,
-    [kenEXShoryuken] = 360,
-    [kenCMP] = 22,
-    [kenEXTatsu] = 67,
-    [kenEXTatsu2] = 106,
-    [kenShoryuReppa] = 1000000,
-    [kenJMK] = 23,
-    [kenCRHP] = 27,
-    [kenJHP] = 40,
-    [kenCHP] = 30,
-    [kenLightShoryuken] = 120,
-    [kenShippuJinraikyaku] = 80,
-    -- AKUMA
-    [akumaJumpForward] = 1000,
-    [akumaDivekick] = 25,
-    [akumaCHP] = 35,
-    [akumaTestCHP] = 180,
-    [akumaLKTatsu] = 105,
-    [akumaCLP] = 40,
-    [akumaCMK] = 23,
-    [akumaCRHP] = 35,
-    [akumaLP] = 30,
-    [akumaKara] = 60,
-    [akumaDemon] = 80,
-    [akumaHTatsu] = 110,
-    [akumaJHP] = 40,
-    -- HUGO
-    [hugoMediumUltraThrow] = 75,    
-    [hugoHeavyPalmBomber]  = 165,       
-    [hugoMegatonPress]     = 295,     
-    [hugoMoonsaultPress]   = 105,
-    -- SEAN
-    [seanCLP] = 40,
-    [seanTaunt] = 50,
-    [seanCHK] = 35,
-    [seanCRMK] = 45,
-    [seanEXTatsu] = 70,
-    [seanHadouBurst] = 90
-}
-
+-- Savedata colors and trial descriptions remain the same.
 COLORS = {
     background = "#00000080",
     text = "white",
@@ -267,11 +62,6 @@ COLORS = {
     box = "white",
     completed = "red",
     debug = "yellow"
-}
-
-characters = {
-    "ALEX", "AKUMA", "DUDLEY", "ELENA", "HUGO", "IBUKI", "KEN", "NECRO", "ORO",
-    "RYU", "SEAN", "URIEN", "YANG", "YUN"
 }
 
 local trialDescriptions = {
@@ -323,9 +113,7 @@ local debugMessage = ""
 local debugTimer = 0
 local debugMode = false
 
-local segmentDelay = 0
-
-local guiinputs = { P1 = {previousinputs = {}} }
+local guiinputs = { P1 = { previousinputs = {} } }
 
 local buttonMappings = {
     [1] = "P1 Light Punch",
@@ -346,48 +134,45 @@ function drawText(x, y, text, color)
     gui.text(x, y, text, color or COLORS.text)
 end
 
+-- Fixed savedata functions using string representation
+local function getSaveDataLength()
+    return #characters * 10
+end
+
 function pullSave()
-    local file = io.open("combo_trial_completion.bin", "r")
-
-    if file == nil then
-        local temp = assert(io.open("combo_trial_completion.bin", "w"))
-        temp:write(0)
+    local filename = "combo_trial_completion.bin"
+    local file = io.open(filename, "r")
+    if not file then
+        local init = string.rep("0", getSaveDataLength())
+        local temp = assert(io.open(filename, "w"))
+        temp:write(init)
         temp:close()
-        
-        return 0
+        return init
     end
-
     local data = file:read("*all")
     file:close()
-    data = tonumber(data)
-
+    if #data < getSaveDataLength() then
+        data = data .. string.rep("0", getSaveDataLength() - #data)
+    end
     return data
 end
 
 function readTrialStatus(data, charIndex, trialIndex)
-    local index = toBinaryIndex(charIndex, trialIndex)
-
-    if (bit.band(data, index) == index) then
-        return true
-    end
-
-    return false
+    local pos = ((charIndex - 1) * 10) + trialIndex
+    return data:sub(pos, pos) == "1"
 end
 
 function writeTrialCompletion(currentCharacter, trialIndex)
-    -- get data
+    local charIndex = toCharIndex(currentCharacter)
+    if not charIndex then return end
     local data = pullSave()
-
-    -- edit data to flip trial bit flag
-    data = bit.bor(data, toBinaryIndex(toCharIndex(currentCharacter), trialIndex))
-
-    -- open file, save, close file
+    local pos = ((charIndex - 1) * 10) + trialIndex
+    local newData = data:sub(1, pos - 1) .. "1" .. data:sub(pos + 1)
     local file = assert(io.open("combo_trial_completion.bin", "w"))
-    file:write(data)
+    file:write(newData)
     file:close()
 end
 
--- converts to bitflag index https://pressbooks.lib.jmu.edu/programmingpatterns/chapter/bitflags/
 function toBinaryIndex(charIndex, trialIndex)
     return 2 ^ (((charIndex - 1) * 10) + (trialIndex - 1))
 end
@@ -398,7 +183,6 @@ function toCharIndex(findchar)
             return index
         end
     end
-    
     return nil
 end
 
@@ -414,7 +198,6 @@ function drawTrialBoxes(x, y, charIndex)
     local spacing = 2
     local startX = x + 35
     local data = pullSave()
-
     for i = 1, 10 do
         local boxX = startX + ((boxWidth + spacing) * (i - 1))
         local isSelected = (charIndex == selectedChar) and (i == selectedBox)
@@ -490,13 +273,14 @@ function showDebug(message)
     print(message)
 end
 
+-- Modified loadCharacterTrial now loads savestates from the "states" folder.
 function loadCharacterTrial(char, trial)
     showDebug("Loading savestate...")
     menuVisible = false
     currentCharacter = char
     if char == "KEN" and trial == 2 then
-        local fsFilename = "ken2.fs"
-        local frFilename = "ken2.fr"
+        local fsFilename = "states/ken2.fs"
+        local frFilename = "states/ken2.fr"
         local fsFile = io.open(fsFilename, "r")
         local frFile = io.open(frFilename, "r")
         if fsFile and frFile then
@@ -519,7 +303,7 @@ function loadCharacterTrial(char, trial)
             showDebug("Error: Missing ken2.fs or ken2.fr savestate file")
         end
     else
-        local filename = char:lower() .. trial .. ".fs"
+        local filename = "states/" .. char:lower() .. trial .. ".fs"
         local f = io.open(filename, "r")
         if f then
             f:close()
@@ -602,6 +386,9 @@ local function resetGreenFrames()
                 for _, move in ipairs(segment) do
                     move.greenFrames = 0
                     move.hitDetected = false
+                    if move.projectile then
+                        move.projTimer = nil
+                    end
                 end
             end
         end
@@ -612,150 +399,81 @@ local function resetGreenFrames()
     segmentDelay = 0  -- reset delay counter
 end
 
---this is such a fucking mess omg
 function updateGreenFrames()
     if comboCompleted and not isStunned then 
         return 
     end
-    local segments = trialComboMoves[currentCharacter] and trialComboMoves[currentCharacter][selectedBox]
+    local segments = trialComboMoves[currentCharacter] and trialComboMoves[currentCharacter][tostring(selectedBox)]
     if not segments then 
         return 
     end
 
-    local activeSegment = nil
-    if currentCharacter == "AKUMA" then
-        if segments.segment1 and comboSegment == 1 then
-            activeSegment = segments.segment1
-        elseif segments.segment2 and comboSegment == 2 then
-            activeSegment = segments.segment2
-        elseif segments.segment3 and comboSegment == 3 then
-            activeSegment = segments.segment3
-        elseif segments.segment4 and comboSegment == 4 then
-            activeSegment = segments.segment4
-        elseif segments.segment5 and comboSegment == 5 then
-            activeSegment = segments.segment5
-        end
-    else
-        if comboSegment == 1 then
-            activeSegment = segments.segment1
-        elseif comboSegment == 2 then
-            activeSegment = segments.segment2
-        elseif comboSegment == 3 then
-            activeSegment = segments.segment3
-        elseif comboSegment == 4 then
-            activeSegment = segments.segment4
-        elseif comboSegment == 5 then
-            activeSegment = segments.segment5
-        elseif comboSegment == 6 then
-            activeSegment = segments.segment6
-        elseif comboSegment == 7 then
-            activeSegment = segments.segment7
-        elseif comboSegment == 8 then
-            activeSegment = segments.segment8
-        end
-    end
-
-    if not activeSegment then 
+    local segmentName = "segment" .. comboSegment
+    local activeSegment = segments[segmentName]
+    if not activeSegment then
         return 
     end
 
     if debugMode then
         print(string.format("Current Segment: %d, Character: %s", comboSegment, currentCharacter or "none"))
-        for i, move in ipairs(activeSegment) do
+        for i, m in ipairs(activeSegment) do
             print(string.format("Move %d: %s, Green Frames: %d, Hit Detected: %s",
-                i, move.move.name, move.greenFrames, tostring(move.hitDetected)))
+                i, m.move, m.greenFrames, tostring(m.hitDetected)))
         end
     end
 
-    if currentCharacter == "KEN" and selectedBox == 2 then
-        local isShippuSegment = true
-        for _, m in ipairs(activeSegment) do
-            if m.move.name ~= "SHIPPU JINRAIKYAKU" then
-                isShippuSegment = false
-                break
-            end
+    -- Read memory values once.
+    local movePressed = memory.readdword(players[curPlayer] + charOffset[1])
+    local hitValue = memory.readdword(players[curPlayer] + charOffset[20])
+    
+    for i, m in ipairs(activeSegment) do
+        local moveObj = (movesData[currentCharacter] and movesData[currentCharacter][m.move]) or {}
+        if moveObj.hidden then
+            m.greenFrames = moveObj.greenFrames or 20
+            m.hitDetected = true
         end
-        if isShippuSegment then
-            if segmentDelay < 120 then
-                segmentDelay = segmentDelay + 1
-                return
+
+        if movePressed and moveObj.address and (movePressed == moveObj.address) then
+            if moveObj.projectile then
+                -- For projectile moves, ignore hitValue.
+                if (i == 1 or (activeSegment[i-1] and activeSegment[i-1].greenFrames > 0)) and m.greenFrames == 0 then
+                    m.greenFrames = moveObj.greenFrames or 20
+                    m.hitDetected = true
+                    if debugMode then
+                        print("Projectile move detected: " .. m.move)
+                    end
+                end
             else
-                segmentDelay = 0
-            end
-        end
-    end
-
-    for i, move in ipairs(activeSegment) do
-        if move.move.hidden then
-            move.greenFrames = greenFrameValues[move.move] or 20
-            move.hitDetected = true
-        end
-        local movePressed = memory.readdword(players[curPlayer] + charOffset[1])
-        local moveAddress = move.move and move.move.address
-        local hitValue = memory.readdword(players[curPlayer] + charOffset[20])
-        if move.move.name == "MP KARA" then
-            if movePressed and moveAddress and (movePressed == moveAddress) then
-                move.greenFrames = greenFrameValues[move.move] or 20
-                move.hitDetected = true
-                if debugMode then
-                    print("Move detected: " .. move.move.name)
+                if hitValue ~= 0 then
+                    if (i == 1 or (activeSegment[i-1] and activeSegment[i-1].greenFrames > 0)) and m.greenFrames == 0 then
+                        m.greenFrames = moveObj.greenFrames or 20
+                        m.hitDetected = true
+                        if debugMode then 
+                            print("Move detected: " .. m.move)
+                        end
+                    end
                 end
             end
+            memory.writedword(players[curPlayer] + charOffset[20], 0)
         else
-            if movePressed and moveAddress and (movePressed == moveAddress) and (hitValue ~= 0) then
-                if currentCharacter == "SEAN" and move.move.name == "CLOSE LIGHT PUNCH" then
-                    -- Process the CLOSE LIGHT PUNCH hit as usual.
-                    if i == 1 or (activeSegment[i - 1] and activeSegment[i - 1].greenFrames > 0) then
-                        if move.greenFrames == 0 then
-                            move.greenFrames = greenFrameValues[move.move] or 20
-                            move.hitDetected = true
-                            if debugMode then 
-                                print("Move detected: " .. move.move.name)
-                            end
-                        end
-                    end
-                    -- Automatically mark TAUNT as hit
-                    for _, other in ipairs(activeSegment) do
-                        if other.move.name == "TAUNT" then
-                            other.greenFrames = greenFrameValues[other.move] or 20
-                            other.hitDetected = true
-                            if debugMode then 
-                                print("Automatically marking TAUNT as hit.")
-                            end
-                        end
-                    end
-                else
-                    if i == 1 or (activeSegment[i - 1] and activeSegment[i - 1].greenFrames > 0) then
-                        if move.greenFrames == 0 then
-                            move.greenFrames = greenFrameValues[move.move] or 20
-                            move.hitDetected = true
-                            if debugMode then 
-                                print("Move detected: " .. move.move.name)
-                            end
-                        end
-                    end
-                end
-                memory.writedword(players[curPlayer] + charOffset[20], 0)
-            else
-                activeSegment[i].greenFrames = activeSegment[i].greenFrames or 0
-            end
+            m.greenFrames = m.greenFrames or 0
         end
     end
 
     for i = #activeSegment, 2, -1 do
-        local prevMove = activeSegment[i - 1]
+        local prev = activeSegment[i-1]
         if activeSegment[i].greenFrames > 0 then
-            prevMove.greenFrames = math.max(prevMove.greenFrames, activeSegment[i].greenFrames)
+            prev.greenFrames = math.max(prev.greenFrames, activeSegment[i].greenFrames)
         end
     end
 
     local allMovesGreen = true
     local anyMoveTurnedWhite = false
-    for i, move in ipairs(activeSegment) do
-        if move.greenFrames > 0 then
-            move.greenFrames = move.greenFrames - 1
-            if move.greenFrames <= 0 then 
-                move.hitDetected = false 
+    for i, m in ipairs(activeSegment) do
+        if m.greenFrames > 0 then
+            m.greenFrames = m.greenFrames - 1
+            if m.greenFrames <= 0 then 
+                m.hitDetected = false 
                 anyMoveTurnedWhite = true
             end
         else
@@ -764,12 +482,12 @@ function updateGreenFrames()
     end
 
     if anyMoveTurnedWhite then
-        for segmentIndex = 1, comboSegment - 1 do
-            local previousSegment = segments["segment" .. segmentIndex]
-            if previousSegment then
-                for _, move in ipairs(previousSegment) do
-                    move.greenFrames = 0
-                    move.hitDetected = false
+        for segIndex = 1, comboSegment - 1 do
+            local prevSegment = segments["segment" .. segIndex]
+            if prevSegment then
+                for _, m in ipairs(prevSegment) do
+                    m.greenFrames = 0
+                    m.hitDetected = false
                 end
             end
         end
@@ -777,8 +495,8 @@ function updateGreenFrames()
 
     if allMovesGreen and not debugMode then
         local maxSegment = 0
-        for segmentName, _ in pairs(segments) do
-            local segNum = tonumber(string.match(segmentName, "%d+"))
+        for segName, _ in pairs(segments) do
+            local segNum = tonumber(string.match(segName, "%d+"))
             if segNum and segNum > maxSegment then
                 maxSegment = segNum
             end
@@ -793,32 +511,32 @@ function updateGreenFrames()
             isStunned = true
             local nextSegment = segments["segment" .. comboSegment]
             if nextSegment then
-                for _, move in ipairs(nextSegment) do
-                    move.greenFrames = 0
-                    move.hitDetected = false
+                for _, m in ipairs(nextSegment) do
+                    m.greenFrames = 0
+                    m.hitDetected = false
                 end
             end
         end
     end
 
     local combined = {}
-    for _, segment in pairs(segments) do
-        for _, move in ipairs(segment) do
-            table.insert(combined, move)
+    for _, seg in pairs(segments) do
+        for _, m in ipairs(seg) do
+            table.insert(combined, m)
         end
     end
     local anyActive = false
-    for _, move in ipairs(combined) do
-        if move.hitDetected then 
+    for _, m in ipairs(combined) do
+        if m.hitDetected then 
             anyActive = true 
             break 
         end
     end
     if not anyActive then 
         resetGreenFrames() 
-        for _, move in ipairs(combined) do
-            move.greenFrames = 0
-            move.hitDetected = false
+        for _, m in ipairs(combined) do
+            m.greenFrames = 0
+            m.hitDetected = false
         end
     end
 end
@@ -826,7 +544,7 @@ end
 function drawDynamicText()
     updateGreenFrames()
     local yPosition = 50
-    local segments = trialComboMoves[currentCharacter] and trialComboMoves[currentCharacter][selectedBox]
+    local segments = trialComboMoves[currentCharacter] and trialComboMoves[currentCharacter][tostring(selectedBox)]
     if not segments then return end
     if debugMode then
         local personalActionAddress = memory.readdword(players[curPlayer] + charOffset[1])
@@ -836,15 +554,15 @@ function drawDynamicText()
     for i = 1, 8 do
         local seg = segments["segment" .. i]
         if seg then
-            for _, move in ipairs(seg) do
-                if not move.move.hidden then
+            for _, m in ipairs(seg) do
+                if (not movesData[currentCharacter] or not movesData[currentCharacter][m.move] or not movesData[currentCharacter][m.move].hidden) then
                     local xOffset = 10
-                    local color = (move.greenFrames > 0) and (debugMode and "yellow" or "green") or "white"
-                    if move.move and move.move.name then 
-                        gui.text(xOffset, yPosition, move.move.name, color)
-                    else 
-                        gui.text(xOffset, yPosition, "Unknown Move", color)
+                    local color = (m.greenFrames > 0) and (debugMode and "yellow" or "green") or "white"
+                    local moveName = m.move
+                    if movesData[currentCharacter] and movesData[currentCharacter][m.move] and movesData[currentCharacter][m.move].name then 
+                        moveName = movesData[currentCharacter][m.move].name
                     end
+                    gui.text(xOffset, yPosition, moveName, color)
                     yPosition = yPosition + 10
                 end
             end
@@ -873,9 +591,11 @@ function mainLoop()
         end
     end
 
-    -- Force player 2's "Down" input when playing SEAN trial 1
     if currentCharacter == "SEAN" and selectedBox == 1 then
-        joypad.set({["P2 Down"] = true}, 2)
+        joypad.set({ ["P2 Down"] = true }, 2)
+    end
+    if currentCharacter == "KEN" and selectedBox == 2 then
+        joypad.set({ ["P2 Up"] = true }, 2)
     end
 end
 
