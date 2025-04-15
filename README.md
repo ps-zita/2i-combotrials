@@ -14,7 +14,8 @@ This is a trial combo mod for SF3 Second Impact. Follow the instructions below t
 - [ ] Finish the rest of the trials.
 - [x] Fix savedata implementation (ty sata).
 - [ ] Divide the savedata bitmap into groups for each individual character.
-- [ ] Add a data subfolder with the savestates, a moves.json with their memory addresses & a combo.json for each character with the combo instead of hardcoding it in the main lua.
+- [x] Add a data subfolder with the savestates, a moves.json with their memory addresses & a trial.json for each character with the combo instead of hardcoding it in the main lua.
+- [ ] Manually add & fix greenframes for untested new trials and test them.
 - [ ] Fix hit detection for sean taunt.
 - [ ] Fix hit detection for all projectiles.
 
@@ -25,4 +26,5 @@ Thank you to SomethingWithaZ for finding memory addresses.
 
 Thank you to [Vesper](https://www.youtube.com/@EXDSPRTS) for writing the trials.
 
-Enjoy!
+## Dependencies
+[dkjson.lua](https://github.com/LuaDist/dkjson) for json decoding

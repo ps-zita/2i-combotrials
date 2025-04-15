@@ -1,0 +1,30 @@
+{
+  "1": {
+    "segment1": [
+      { "move": "JUMP_FORWARD", "greenFrames": 0, "hitDetected": true },
+      { "move": "JUMPING_MEDIUM_KICK", "greenFrames": 0, "hitDetected": false },
+      { "move": "CLOSE_MEDIUM_PUNCH", "greenFrames": 0, "hitDetected": false },
+      { "move": "CROUCHING_HEAVY_PUNCH", "greenFrames": 0, "hitDetected": false },
+      { "move": "EX_TATSU", "greenFrames": 0, "hitDetected": false },
+      { "move": "EX_SHORYUKEN", "greenFrames": 0, "hitDetected": false }
+    ],
+    "segment2": [
+      { "move": "JUMP_FORWARD", "greenFrames": 0, "hitDetected": false },
+      { "move": "JUMPING_HEAVY_PUNCH", "greenFrames": 0, "hitDetected": false },
+      { "move": "CLOSE_MEDIUM_PUNCH", "greenFrames": 0, "hitDetected": false },
+      { "move": "CLOSE_HEAVY_PUNCH", "greenFrames": 0, "hitDetected": false },
+      { "move": "EX_TATSU2", "greenFrames": 0, "hitDetected": false },
+      { "move": "SHORYU_REPPA", "greenFrames": 0, "hitDetected": false }
+    ]
+  },
+  "2": {
+    "segment1": [
+      { "move": "LIGHT_SHORYUKEN", "greenFrames": 0, "hitDetected": false },
+      { "move": "SHIPPU_JINRAIKYAKU", "greenFrames": 0, "hitDetected": false }
+    ],
+    "segment2": [
+      { "move": "SHIPPU_JINRAIKYAKU", "greenFrames": 0, "hitDetected": false },
+      { "move": "LIGHT_SHORYUKEN", "greenFrames": 0, "hitDetected": false }
+    ]
+  }
+}

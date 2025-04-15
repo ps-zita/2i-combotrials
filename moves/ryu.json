@@ -1,0 +1,34 @@
+{
+  "JUMPING_HEAVY_PUNCH": {
+    "name": "JUMPING HEAVY PUNCH",
+    "address": 102438024,
+    "greenFrames": 40
+  },
+  "CLOSE_HEAVY_PUNCH": {
+    "name": "CLOSE HEAVY PUNCH",
+    "address": 102432912,
+    "greenFrames": 45
+  },
+  "EX_DONKEY_KICK": {
+    "name": "EX DONKEY KICK",
+    "address": 102464588,
+    "greenFrames": 70
+  },
+  "EX_TATSU": {
+    "name": "EX TATSU",
+    "address": 102459636,
+    "greenFrames": 800
+  },
+  "SHINKU_HADOKEN": {
+    "name": "SHINKU HADOKEN",
+    "address": 102460100,
+    "greenFrames": 100,
+    "projectile": true
+  },
+  "IDLE": {
+    "name": "IDLE",
+    "address": 102398980,
+    "greenFrames": 100,
+    "hidden": true
+  }
+}
