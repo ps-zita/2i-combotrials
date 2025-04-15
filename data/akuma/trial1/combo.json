@@ -1,0 +1,17 @@
+{
+    "desc" : "normal corner bnb but the reset > kara demon\nis only a true combo on hugo",
+    "scheme": [
+        [
+            { "move": "JUMP_FORWARD", "greenFrames": 0, "hitDetected": false },
+            { "move": "DIVEKICK", "greenFrames": 0, "hitDetected": false },
+            { "move": "CLOSE_HEAVY_PUNCH", "greenFrames": 0, "hitDetected": false },
+            { "move": "LK_TATSU", "greenFrames": 0, "hitDetected": false },
+            { "move": "HK_TATSU", "greenFrames": 0, "hitDetected": false },
+            { "move": "JUMPING_HEAVY_PUNCH", "greenFrames": 0, "hitDetected": false }
+        ],
+        [
+            { "move": "MP_KARA", "greenFrames": 0, "hitDetected": false },
+            { "move": "RAGING_DEMON", "greenFrames": 0, "hitDetected": false }
+        ]
+    ]
+}

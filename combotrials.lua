@@ -8,21 +8,7 @@ local OS = package.config:sub(1,1) == "\\" and "win" or "unix"
 -- data pulled from directories
 local movesData = {}
 local trialsData = {}
-local characters = {
-    "ALEX", "AKUMA", "DUDLEY", "ELENA", "HUGO", "IBUKI", "KEN", "NECRO",
-    "ORO", "RYU", "SEAN", "URIEN", "YANG", "YUN"
-}
-for _, char in ipairs(characters) do
-    local mfile = "moves/" .. string.lower(char) .. ".json"
-    local tfile = "trials/" .. string.lower(char) .. ".json"
-    movesData[char] = loadJSONFile(mfile)
-    trialsData[char] = loadJSONFile(tfile)
-    if (not trialsData[char]) and char ~= "ALEX" then
-        trialsData[char] = loadJSONFile("trials/alex.json")
-    end
-end
-
-local trialComboMoves = trialsData
+local characters = {}
 
 -- Define globals used for hit detection
 local comboSegment = 1

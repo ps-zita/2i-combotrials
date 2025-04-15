@@ -1,0 +1,63 @@
+{
+  "JUMP_FORWARD": {
+    "name": "JUMP FORWARD",
+    "address": 103368168,
+    "greenFrames": 1000,
+    "hidden": true
+  },
+  "JUMPING_MEDIUM_KICK": {
+    "name": "JUMPING MEDIUM KICK",
+    "address": 103411512,
+    "greenFrames": 23
+  },
+  "CLOSE_MEDIUM_PUNCH": {
+    "name": "CLOSE MEDIUM PUNCH",
+    "address": 103403840,
+    "greenFrames": 22
+  },
+  "CROUCHING_HEAVY_PUNCH": {
+    "name": "CROUCHING HEAVY PUNCH",
+    "address": 103406544,
+    "greenFrames": 27
+  },
+  "EX_TATSU": {
+    "name": "EX TATSU",
+    "address": 103432044,
+    "greenFrames": 67
+  },
+  "EX_TATSU2": {
+    "name": "EX TATSU",
+    "address": 103432044,
+    "greenFrames": 106
+  },
+  "EX_SHORYUKEN": {
+    "name": "EX SHORYUKEN",
+    "address": 103430076,
+    "greenFrames": 360
+  },
+  "JUMPING_HEAVY_PUNCH": {
+    "name": "JUMPING HEAVY PUNCH",
+    "address": 103410856,
+    "greenFrames": 40
+  },
+  "CLOSE_HEAVY_PUNCH": {
+    "name": "CLOSE HEAVY PUNCH",
+    "address": 103413664,
+    "greenFrames": 30
+  },
+  "LIGHT_SHORYUKEN": {
+    "name": "LIGHT SHORYUKEN",
+    "address": 103429212,
+    "greenFrames": 120
+  },
+  "SHIPPU_JINRAIKYAKU": {
+    "name": "SHIPPU JINRAIKYAKU",
+    "address": 103434300,
+    "greenFrames": 80
+  },
+  "SHORYU_REPPA": {
+    "name": "SHORYU REPPA",
+    "address": 103432660,
+    "greenFrames": 1000000
+  }
+}
