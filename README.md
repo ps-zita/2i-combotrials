@@ -26,4 +26,5 @@ Thank you to SomethingWithaZ for finding memory addresses.
 
 Thank you to [Vesper](https://www.youtube.com/@EXDSPRTS) for writing the trials.
 
-Enjoy!
+## Dependencies
+[dkjson.lua](https://github.com/LuaDist/dkjson) for json decoding
