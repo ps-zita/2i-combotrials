@@ -1,23 +1,11 @@
+-- libraries
 local bit = require("bit")
 local json = require("dkjson")
 
--- Helper function to load and decode a JSON file.
-local function loadJSONFile(path)
-    local file = io.open(path, "r")
-    if file then 
-        local content = file:read("*a")
-        file:close()
-        local obj, pos, err = json.decode(content)
-        if err then
-            print("JSON decode error in file " .. path .. ": " .. err)
-        end
-        return obj
-    else
-        print("Error: Could not open file " .. path)
-        return nil
-    end
-end
+-- OS running script, for directory info
+local OS = package.config:sub(1,1) == "\\" and "win" or "unix"
 
+-- data pulled from directories
 local movesData = {}
 local trialsData = {}
 local characters = {
@@ -40,7 +28,6 @@ local trialComboMoves = trialsData
 local comboSegment = 1
 local comboCompleted = false
 local isStunned = false
-local segmentDelay = 0
 
 -- Standard emulator setup
 local curGame = { [1] = 0x200e504, [2] = 0x200e910, [3] = 0x2010167 }
@@ -51,66 +38,18 @@ local charOffset = {
     [11] = 0x27c, [12] = 0x280, [13] = 0x290, [14] = 0x294, [15] = 0x298,
     [16] = 0x274, [17] = 0x278, [18] = 0x264, [19] = 0x268, [20] = 0x2d2
 }
+
+-- 
 local curPlayer = 1
-local PlayerAction = memory.readdword(players[curPlayer] + charOffset[1])
 
--- Savedata colors and trial descriptions remain the same.
-COLORS = {
-    background = "#00000080",
-    text = "white",
-    highlight = "green",
-    box = "white",
-    completed = "red",
-    debug = "yellow"
-}
-
-local trialDescriptions = {
-    ALEX = {
-        "Lorem ipsum dolor sit amet\nConsectetur adipiscing elit\nSed do eiusmod tempor",
-        "Ut enim ad minim veniam\nQuis nostrud exercitation\nUllamco laboris nisi",
-        "Duis aute irure dolor in\nReprehenderit in voluptate\nVelit esse cillum dolore",
-        "Excepteur sint occaecat\nCupidatat non proident\nSunt in culpa qui officia",
-        "Integer nec odio praesent\nLibero sed cursus ante\nDapibus diam sed nisi",
-        "Nulla quis sem at nibh\nElementum imperdiet duis\nSagittis ipsum praesent",
-        "Nam nec ante sed lacinia\nSapien non libero nullam\nOrci pede venenatis non",
-        "In hac habitasse platea\nDictumst aliquam augue\nQuam sollicitudin vitae",
-        "Etiam justo etiam pretium\nIaculis justo in hac\nMaecenas rhoncus aliquam",
-        "Cum sociis natoque\nPenatibus et magnis dis\nParturient montes nascetur"
-    },
-    KEN = {
-        [1] = "stun adds an extra frame of hitstun, this allows \nyou to do cl.mp > cr.hp and ex tatsu > shippu.\ntrial by vesper",
-        [2] = "this one is stupid lmao\ntrial by vesper"
-    },
-    HUGO = {
-        [1] = "this character fucking sucks\nthis trial is also kinda broken"
-    },
-    AKUMA = {
-        [2] = "light punch in a juggle against a stunned gill\nallows for the next move to restand",
-        [1] = "normal corner bnb but the reset > kara demon\nis only a true combo on hugo",
-        [3] = "test trial fur sata :)"
-    }
-}
-for _, char in ipairs(characters) do
-    if char ~= "ALEX" and char ~= "KEN" then
-        if not trialDescriptions[char] then
-            trialDescriptions[char] = trialDescriptions.ALEX
-        end
-    end
-end
-
+-- 
 local selectedChar = 1
 local selectedBox = 1
 local menuVisible = true
 local savestateLoaded = false
-local firstFrame = true
-local buttonPressed = false
-local inputBlockFrames = 0
 local BLOCK_FRAMES = 30
-local pendingSavestate = false
 local startHoldFrames = 0
 local START_HOLD_THRESHOLD = 30
-local debugMessage = ""
-local debugTimer = 0
 local debugMode = false
 
 local guiinputs = { P1 = { previousinputs = {} } }
@@ -126,13 +65,167 @@ local buttonMappings = {
     [9] = "P1 Coin"
 }
 
-function drawText(x, y, text, color)
-    gui.text(x - 1, y, text, "black")
-    gui.text(x + 1, y, text, "black")
-    gui.text(x, y - 1, text, "black")
-    gui.text(x, y + 1, text, "black")
-    gui.text(x, y, text, color or COLORS.text)
+-- Savedata colors
+COLORS = {
+    background = "#00000080",
+    text = "white",
+    highlight = "green",
+    box = "white",
+    completed = "red",
+    debug = "yellow"
+}
+
+-- trial desc
+-- local trialDescriptions = {
+--     ALEX = {
+--         "Lorem ipsum dolor sit amet\nConsectetur adipiscing elit\nSed do eiusmod tempor",
+--         "Ut enim ad minim veniam\nQuis nostrud exercitation\nUllamco laboris nisi",
+--         "Duis aute irure dolor in\nReprehenderit in voluptate\nVelit esse cillum dolore",
+--         "Excepteur sint occaecat\nCupidatat non proident\nSunt in culpa qui officia",
+--         "Integer nec odio praesent\nLibero sed cursus ante\nDapibus diam sed nisi",
+--         "Nulla quis sem at nibh\nElementum imperdiet duis\nSagittis ipsum praesent",
+--         "Nam nec ante sed lacinia\nSapien non libero nullam\nOrci pede venenatis non",
+--         "In hac habitasse platea\nDictumst aliquam augue\nQuam sollicitudin vitae",
+--         "Etiam justo etiam pretium\nIaculis justo in hac\nMaecenas rhoncus aliquam",
+--         "Cum sociis natoque\nPenatibus et magnis dis\nParturient montes nascetur"
+--     },
+--     KEN = {
+--         [1] = "stun adds an extra frame of hitstun, this allows \nyou to do cl.mp > cr.hp and ex tatsu > shippu.\ntrial by vesper",
+--         [2] = "this one is stupid lmao\ntrial by vesper"
+--     },
+--     HUGO = {
+--         [1] = "this character fucking sucks\nthis trial is also kinda broken"
+--     },
+--     AKUMA = {
+--         [2] = "light punch in a juggle against a stunned gill\nallows for the next move to restand",
+--         [1] = "normal corner bnb but the reset > kara demon\nis only a true combo on hugo",
+--         [3] = "test trial fur sata :)"
+--     }
+-- }
+
+
+
+-- LOADING CHARACTER DATA --
+
+
+
+-- Helper function to load and decode a JSON file.
+local function loadJSONFile(path)
+    local file = io.open(path, "r")
+    if file then 
+        local content = file:read("*a")
+        file:close()
+        local obj, pos, err = json.decode(content)
+        if err then
+            print("JSON decode error in file " .. path .. ": " .. err)
+        end
+        return obj
+    else
+        print("Error: Could not open file " .. path)
+        return nil
+    end
 end
+
+function getMoves(char)
+    local path = "./data/" .. char .. "moves.json"
+    return loadJSONFile(path)
+end
+
+function getTrial(char, index)
+    local path = "./data/" .. char .. "/trial" .. index .. "/combo.json"
+    return loadJSONFile(path)
+end
+
+function getTrialCount(char)
+    local count = -1
+    local path = [[dir ".\data\]] .. char .. [[" /b]]
+
+    for dir in io.popen(path):lines() do 
+        count = count + 1
+    end
+
+    return count
+end
+
+-- getting char directories
+for dir in io.popen([[dir ".\data" /b]]):lines() do 
+    table.insert(characters, dir)
+end
+
+
+-- for _, char in ipairs(characters) do
+--     local mfile = "moves/" .. string.lower(char) .. ".json"
+--     local tfile = "trials/" .. string.lower(char) .. ".json"
+--     movesData[char] = loadJSONFile(mfile)
+--     trialsData[char] = loadJSONFile(tfile)
+--     if (not trialsData[char]) and char ~= "ALEX" then
+--         trialsData[char] = loadJSONFile("trials/alex.json")
+--     end
+-- end
+
+-- for _, char in ipairs(characters) do
+--     if char ~= "ALEX" and char ~= "KEN" then
+--         if not trialDescriptions[char] then
+--             trialDescriptions[char] = trialDescriptions.ALEX
+--         end
+--     end
+-- end
+
+-- Modified loadCharacterTrial now loads savestates from the "states" folder.
+function loadCharacterTrial(char, index)
+    print("Loading savestate...")
+    menuVisible = false
+    currentCharacter = char
+
+    local path = "./data/" .. char .. "/trial" .. index .. "/save.fs"
+    local f = io.open(path, "r")
+
+    if f then
+        f:close()
+        print("Found savestate file: " .. path)
+        local success, err = pcall(function()
+            savestate.load(path)
+            print("Savestate loaded")
+            savestateLoaded = true
+            inputBlockFrames = BLOCK_FRAMES
+        end)
+        if not success then
+            print("Error: " .. err)
+        end
+    else
+        print("Error: Savestate not found (" .. path .. ")")
+    end
+
+    -- for loading ken2.fr
+    if char == "KEN" and index == 2 then
+        ken2fr()
+    end
+end
+
+-- for loading ken2fr
+function ken2fr()
+    local frFilename = "states/ken2.fr"
+    local frFile = io.open(frFilename, "r")
+    if frFile then
+        frFile:close()
+        local success_fr, err_fr = pcall(function() 
+            savestate.load(frFilename) 
+        end)
+        if success_fr then
+            print("Loaded ken2.fr")
+        else
+            print("Error loading ken2.fr")
+        end
+    else
+        print("Error: Missing ken2.fr savestate file")
+    end
+end
+
+
+
+-- LOADING SAVE DATA --
+
+
 
 -- Fixed savedata functions using string representation
 local function getSaveDataLength()
@@ -186,6 +279,20 @@ function toCharIndex(findchar)
     return nil
 end
 
+
+
+-- GUI DRAWING --
+
+
+
+function drawText(x, y, text, color)
+    gui.text(x - 1, y, text, "black")
+    gui.text(x + 1, y, text, "black")
+    gui.text(x, y - 1, text, "black")
+    gui.text(x, y + 1, text, "black")
+    gui.text(x, y, text, color or COLORS.text)
+end
+
 function drawBox(x, y, width, height, isSelected, isCompleted)
     local outline = isSelected and COLORS.highlight or COLORS.box
     local fillColor = isCompleted and COLORS.completed or COLORS.background
@@ -198,6 +305,7 @@ function drawTrialBoxes(x, y, charIndex)
     local spacing = 2
     local startX = x + 35
     local data = pullSave()
+
     for i = 1, 10 do
         local boxX = startX + ((boxWidth + spacing) * (i - 1))
         local isSelected = (charIndex == selectedChar) and (i == selectedBox)
@@ -208,12 +316,8 @@ end
 
 function drawTrialExplanation()
     local char = characters[selectedChar]
-    local desc = nil
-    if trialDescriptions[char] then
-        if type(trialDescriptions[char][1]) == "string" then
-            desc = trialDescriptions[char][selectedBox] or trialDescriptions[char][1]
-        end
-    end
+    local desc = getTrial(char, selectedBox).desc
+
     if desc then
         local boxWidth = 200
         local boxHeight = 45
@@ -267,89 +371,41 @@ function drawCreditPanel()
     end
 end
 
-function showDebug(message)
-    debugMessage = message
-    debugTimer = 180
-    print(message)
-end
 
--- Modified loadCharacterTrial now loads savestates from the "states" folder.
-function loadCharacterTrial(char, trial)
-    showDebug("Loading savestate...")
-    menuVisible = false
-    currentCharacter = char
-    if char == "KEN" and trial == 2 then
-        local fsFilename = "states/ken2.fs"
-        local frFilename = "states/ken2.fr"
-        local fsFile = io.open(fsFilename, "r")
-        local frFile = io.open(frFilename, "r")
-        if fsFile and frFile then
-            fsFile:close()
-            frFile:close()
-            local success_fs, err_fs = pcall(function() 
-                savestate.load(fsFilename) 
-            end)
-            local success_fr, err_fr = pcall(function() 
-                savestate.load(frFilename) 
-            end)
-            if success_fs and success_fr then
-                showDebug("Loaded Ken trial 2 (ken2.fs and ken2.fr)")
-                savestateLoaded = true
-                inputBlockFrames = BLOCK_FRAMES
-            else
-                showDebug("Error loading ken2.fs or ken2.fr")
-            end
-        else
-            showDebug("Error: Missing ken2.fs or ken2.fr savestate file")
-        end
-    else
-        local filename = "states/" .. char:lower() .. trial .. ".fs"
-        local f = io.open(filename, "r")
-        if f then
-            f:close()
-            showDebug("Found savestate file: " .. filename)
-            local success, err = pcall(function()
-                savestate.load(filename)
-                showDebug("Savestate loaded")
-                savestateLoaded = true
-                inputBlockFrames = BLOCK_FRAMES
-            end)
-            if not success then
-                showDebug("Error: " .. err)
-            end
-        else
-            showDebug("Error: Savestate not found (" .. filename .. ")")
-        end
-    end
-end
+
+
+-- MENU INPUT --
+
+
+
 
 function handleMenuInput()
     local inputs = joypad.get()
     if inputs["P1 Down"] and not guiinputs.P1.previousinputs["P1 Down"] then
         selectedChar = selectedChar % #characters + 1
-        showDebug("Selected: " .. characters[selectedChar])
+        print("Selected: " .. characters[selectedChar])
     elseif inputs["P1 Up"] and not guiinputs.P1.previousinputs["P1 Up"] then
         selectedChar = selectedChar - 1
         if selectedChar < 1 then selectedChar = #characters end
-        showDebug("Selected: " .. characters[selectedChar])
+        print("Selected: " .. characters[selectedChar])
     elseif inputs["P1 Right"] and not guiinputs.P1.previousinputs["P1 Right"] then
         selectedBox = selectedBox % 10 + 1
-        showDebug("Trial " .. selectedBox)
+        print("Trial " .. selectedBox)
     elseif inputs["P1 Left"] and not guiinputs.P1.previousinputs["P1 Left"] then
         selectedBox = selectedBox - 1
         if selectedBox < 1 then selectedBox = 10 end
-        showDebug("Trial " .. selectedBox)
+        print("Trial " .. selectedBox)
     end
     for i = 1, 9 do
         local button = buttonMappings[i]
         if inputs[button] and not guiinputs.P1.previousinputs[button] then
             if button == "P1 Coin" then
                 debugMode = not debugMode
-                showDebug("Debug Mode: " .. (debugMode and "ON" or "OFF"))
+                print("Debug Mode: " .. (debugMode and "ON" or "OFF"))
             else
                 local message = button .. " pressed for " .. characters[selectedChar] .. " trial " .. selectedBox
                 print(message)
-                showDebug(message)
+                print(message)
                 loadCharacterTrial(characters[selectedChar], selectedBox)
                 gui.transparency(100)
                 break
@@ -369,7 +425,7 @@ function handleStartButton()
             menuVisible = true
             savestateLoaded = false
             startHoldFrames = 0
-            showDebug("Menu opened")
+            print("Menu opened")
         end
     else
         if startHoldFrames > 0 and startHoldFrames < START_HOLD_THRESHOLD and savestateLoaded then
@@ -379,8 +435,15 @@ function handleStartButton()
     end
 end
 
+
+
+-- COMBO LOGIC --
+
+
+
+
 local function resetGreenFrames()
-    for _, character in pairs(trialComboMoves) do
+    for _, character in pairs(trialsData) do
         for _, trial in pairs(character) do
             for _, segment in pairs(trial) do
                 for _, move in ipairs(segment) do
@@ -403,7 +466,7 @@ function updateGreenFrames()
     if comboCompleted and not isStunned then 
         return 
     end
-    local segments = trialComboMoves[currentCharacter] and trialComboMoves[currentCharacter][tostring(selectedBox)]
+    local segments = trialsData[currentCharacter] and trialsData[currentCharacter][tostring(selectedBox)]
     if not segments then 
         return 
     end
@@ -544,7 +607,7 @@ end
 function drawDynamicText()
     updateGreenFrames()
     local yPosition = 50
-    local segments = trialComboMoves[currentCharacter] and trialComboMoves[currentCharacter][tostring(selectedBox)]
+    local segments = trialsData[currentCharacter] and trialsData[currentCharacter][tostring(selectedBox)]
     if not segments then return end
     if debugMode then
         local personalActionAddress = memory.readdword(players[curPlayer] + charOffset[1])
@@ -577,7 +640,7 @@ savestate.registerload(onSavestateLoad)
 
 function mainLoop()
     handleStartButton()
-    showDebug(memory.readdword(players[curPlayer] + charOffset[1]))
+    print(memory.readdword(players[curPlayer] + charOffset[1]))
     if menuVisible then
         handleMenuInput()
         drawHelpPanel()
