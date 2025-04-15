@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 -- importing bitwise operations library
 local bit = require("bit")
 
@@ -882,4 +883,5 @@ end
 while true do
     mainLoop()
     emu.frameadvance()
+=======
 end
