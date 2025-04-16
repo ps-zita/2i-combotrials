@@ -66,6 +66,8 @@ COLORS = {
 
 -- INIT & TOOLS
 
+
+
 -- Helper function to load and decode a JSON file.
 local function loadJSONFile(path)
     local file = io.open(path, "r")
@@ -210,65 +212,6 @@ function ken2fr()
     else
         print("Error: Missing ken2.fr savestate file")
     end
-end
-
-
-
--- LOADING SAVE DATA --
-
-
-
-
--- Fixed savedata functions using string representation
-local function getSaveDataLength()
-    return #CHARACTERS * 10
-end
-
-function pullSave()
-    local filename = "combo_trial_completion.bin"
-    local file = io.open(filename, "r")
-    if not file then
-        local init = string.rep("0", getSaveDataLength())
-        local temp = assert(io.open(filename, "w"))
-        temp:write(init)
-        temp:close()
-        return init
-    end
-    local data = file:read("*all")
-    file:close()
-    if #data < getSaveDataLength() then
-        data = data .. string.rep("0", getSaveDataLength() - #data)
-    end
-    return data
-end
-
-function readTrialStatus(data, charIndex, trialIndex)
-    local pos = ((charIndex - 1) * 10) + trialIndex
-    return data:sub(pos, pos) == "1"
-end
-
-function writeTrialCompletion(currentCharacter, trialIndex)
-    local charIndex = toCharIndex(currentCharacter)
-    if not charIndex then return end
-    local data = pullSave()
-    local pos = ((charIndex - 1) * 10) + trialIndex
-    local newData = data:sub(1, pos - 1) .. "1" .. data:sub(pos + 1)
-    local file = assert(io.open("combo_trial_completion.bin", "w"))
-    file:write(newData)
-    file:close()
-end
-
-function toBinaryIndex(charIndex, trialIndex)
-    return 2 ^ (((charIndex - 1) * 10) + (trialIndex - 1))
-end
-
-function toCharIndex(findchar)
-    for index, char in ipairs(CHARACTERS) do
-        if char == findchar then
-            return index
-        end
-    end
-    return nil
 end
 
 
