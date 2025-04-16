@@ -1,0 +1,22 @@
+{
+  "HEAVY_ULTRA_THROW": {
+    "name": "HEAVY ULTRA THROW",
+    "address": 102800188,
+    "greenFrames": 75
+  },
+  "HEAVY_PALM_BOMBER": {
+    "name": "HEAVY PALM BOMBER",
+    "address": 102846464,
+    "greenFrames": 165
+  },
+  "MEGATON_PRESS": {
+    "name": "MEGATON PRESS",
+    "address": 102854024,
+    "greenFrames": 295
+  },
+  "MOONSAULT_PRESS": {
+    "name": "MOONSAULT PRESS",
+    "address": 102797300,
+    "greenFrames": 105
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "HEAVY_FLASH_CHOP": {
+    "name": "HEAVY FLASH CHOP",
+    "address": 102385716,
+    "greenFrames": 45
+  },
+  "MEDIUM_PUNCH": {
+    "name": "MEDIUM PUNCH",
+    "address": 102349208,
+    "greenFrames": 60
+  },
+  "LIGHT_FLASH_CHOP": {
+    "name": "LIGHT FLASH CHOP",
+    "address": 102384844,
+    "greenFrames": 77
+  },
+  "BOOMERANG_RAID": {
+    "name": "BOOMERANG RAID",
+    "address": 102387828,
+    "greenFrames": 100
+  },
+  "IDLE": {
+    "name": "IDLE",
+    "address": 102302556,
+    "greenFrames": 1000,
+    "hidden": true
+  }
+}
