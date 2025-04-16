@@ -48,7 +48,7 @@
   "MP_KARA": {
     "name": "MP KARA",
     "address": 103631804,
-    "greenFrames": 60,
+    "greenFrames": 100,
     "projectile": true
   },
   "RAGING_DEMON": {
