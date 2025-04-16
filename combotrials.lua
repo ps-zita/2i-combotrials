@@ -3,7 +3,7 @@ local bit = require("bit")
 local json = require("dkjson")
 
 -- OS running script, for directory info
-local OS = package.config:sub(1,1) == "\\" and "win" or "unix"
+-- local OS = package.config:sub(1,1) == "\\" and "win" or "unix"
 
 -- data pulled from directories
 local movesData = {}
@@ -61,39 +61,11 @@ COLORS = {
     debug = "yellow"
 }
 
--- trial desc
--- local trialDescriptions = {
---     ALEX = {
---         "Lorem ipsum dolor sit amet\nConsectetur adipiscing elit\nSed do eiusmod tempor",
---         "Ut enim ad minim veniam\nQuis nostrud exercitation\nUllamco laboris nisi",
---         "Duis aute irure dolor in\nReprehenderit in voluptate\nVelit esse cillum dolore",
---         "Excepteur sint occaecat\nCupidatat non proident\nSunt in culpa qui officia",
---         "Integer nec odio praesent\nLibero sed cursus ante\nDapibus diam sed nisi",
---         "Nulla quis sem at nibh\nElementum imperdiet duis\nSagittis ipsum praesent",
---         "Nam nec ante sed lacinia\nSapien non libero nullam\nOrci pede venenatis non",
---         "In hac habitasse platea\nDictumst aliquam augue\nQuam sollicitudin vitae",
---         "Etiam justo etiam pretium\nIaculis justo in hac\nMaecenas rhoncus aliquam",
---         "Cum sociis natoque\nPenatibus et magnis dis\nParturient montes nascetur"
---     },
---     KEN = {
---         [1] = "stun adds an extra frame of hitstun, this allows \nyou to do cl.mp > cr.hp and ex tatsu > shippu.\ntrial by vesper",
---         [2] = "this one is stupid lmao\ntrial by vesper"
---     },
---     HUGO = {
---         [1] = "this character fucking sucks\nthis trial is also kinda broken"
---     },
---     AKUMA = {
---         [2] = "light punch in a juggle against a stunned gill\nallows for the next move to restand",
---         [1] = "normal corner bnb but the reset > kara demon\nis only a true combo on hugo",
---         [3] = "test trial fur sata :)"
---     }
--- }
+SAVE = {}
 
 
 
--- LOADING CHARACTER DATA --
-
-
+-- INIT & TOOLS
 
 -- Helper function to load and decode a JSON file.
 local function loadJSONFile(path)
@@ -112,8 +84,30 @@ local function loadJSONFile(path)
     end
 end
 
+local function createSave()
+    local temp = assert(io.open("./save.json", "w"))
+    local data = {}
+
+    
+end
+
+local function init()
+    SAVE = loadJSONFile("./save.json")
+
+    if SAVE == nil then
+        createSave()
+    end
+end
+
+init()
+
+
+
+-- LOADING CHARACTER DATA --
+
+
 function getMoves(char)
-    local path = "./data/" .. char .. "moves.json"
+    local path = "./data/" .. char .. "/moves.json"
     return loadJSONFile(path)
 end
 
@@ -138,32 +132,17 @@ for dir in io.popen([[dir ".\data" /b]]):lines() do
     table.insert(characters, dir)
 end
 
-
--- for _, char in ipairs(characters) do
---     local mfile = "moves/" .. string.lower(char) .. ".json"
---     local tfile = "trials/" .. string.lower(char) .. ".json"
---     movesData[char] = loadJSONFile(mfile)
---     trialsData[char] = loadJSONFile(tfile)
---     if (not trialsData[char]) and char ~= "ALEX" then
---         trialsData[char] = loadJSONFile("trials/alex.json")
---     end
--- end
-
--- for _, char in ipairs(characters) do
---     if char ~= "ALEX" and char ~= "KEN" then
---         if not trialDescriptions[char] then
---             trialDescriptions[char] = trialDescriptions.ALEX
---         end
---     end
--- end
-
 -- Modified loadCharacterTrial now loads savestates from the "states" folder.
 function loadCharacterTrial(char, index)
     print("Loading savestate...")
-    menuVisible = false
-    currentCharacter = char
 
-    local path = "./data/" .. char .. "/trial" .. index .. "/save.fs"
+    -- updating character globals
+    currentCharacter = char
+    movesData = getMoves(char)
+    trialsData = getTrial(char, index)
+
+    -- getting savedata
+    local path = "./data/" .. char .. "/trial" .. index .. "/state.fs"
     local f = io.open(path, "r")
 
     if f then
@@ -190,7 +169,7 @@ end
 
 -- for loading ken2fr
 function ken2fr()
-    local frFilename = "states/ken2.fr"
+    local frFilename = "./data/KEN/trial2/ken2.fr"
     local frFile = io.open(frFilename, "r")
     if frFile then
         frFile:close()
@@ -291,8 +270,9 @@ function drawTrialBoxes(x, y, charIndex)
     local spacing = 2
     local startX = x + 35
     local data = pullSave()
+    local trialCount = getTrialCount(characters[charIndex])
 
-    for i = 1, 10 do
+    for i = 1, trialCount do
         local boxX = startX + ((boxWidth + spacing) * (i - 1))
         local isSelected = (charIndex == selectedChar) and (i == selectedBox)
         local isCompleted = readTrialStatus(data, charIndex, i)
@@ -398,7 +378,7 @@ function handleMenuInput()
             end
         end
     end
-    for k, v in pairs(inputs) do
+    for k, v in ipairs(inputs) do
         guiinputs.P1.previousinputs[k] = v
     end
 end
@@ -428,55 +408,53 @@ end
 
 
 
-local function resetGreenFrames()
-    for _, character in pairs(trialsData) do
-        for _, trial in pairs(character) do
-            for _, segment in pairs(trial) do
-                for _, move in ipairs(segment) do
-                    move.greenFrames = 0
-                    move.hitDetected = false
-                    if move.projectile then
-                        move.projTimer = nil
-                    end
-                end
-            end
-        end
-    end
+local function onLoad()
+    -- updating globals
+    menuVisible = false
     comboSegment = 1
     comboCompleted = false
     isStunned = false
     segmentDelay = 0  -- reset delay counter
+
+    -- reset green frames
+    for _, segment in ipairs(trialsData.scheme) do
+        for _, move in ipairs(segment) do
+            move.greenFrames = 0
+            move.hitDetected = false
+            if move.projectile then
+                move.projTimer = nil
+            end
+        end
+    end
 end
 
+savestate.registerload(onLoad)
+
 function updateGreenFrames()
+    local segments = trialsData.scheme
+    local activeSegment = segments[comboSegment]
+
     if comboCompleted and not isStunned then 
         return 
     end
-    local segments = trialsData[currentCharacter] and trialsData[currentCharacter][tostring(selectedBox)]
-    if not segments then 
-        return 
-    end
-
-    local segmentName = "segment" .. comboSegment
-    local activeSegment = segments[segmentName]
+    
     if not activeSegment then
         return 
     end
 
-    if debugMode then
-        print(string.format("Current Segment: %d, Character: %s", comboSegment, currentCharacter or "none"))
-        for i, m in ipairs(activeSegment) do
-            print(string.format("Move %d: %s, Green Frames: %d, Hit Detected: %s",
-                i, m.move, m.greenFrames, tostring(m.hitDetected)))
-        end
-    end
+    -- debug
+    -- print(string.format("Current Segment: %d, Character: %s", comboSegment, currentCharacter or "none"))
+    -- for i, m in ipairs(activeSegment) do
+    --     print(string.format("Move %d: %s, Green Frames: %d, Hit Detected: %s",
+    --         i, m.move, m.greenFrames, tostring(m.hitDetected)))
+    -- end
 
     -- Read memory values once.
     local movePressed = memory.readdword(players[curPlayer] + charOffset[1])
     local hitValue = memory.readdword(players[curPlayer] + charOffset[20])
     
     for i, m in ipairs(activeSegment) do
-        local moveObj = (movesData[currentCharacter] and movesData[currentCharacter][m.move]) or {}
+        local moveObj = movesData[m.move]
         if moveObj.hidden then
             m.greenFrames = moveObj.greenFrames or 20
             m.hitDetected = true
@@ -544,7 +522,7 @@ function updateGreenFrames()
 
     if allMovesGreen and not debugMode then
         local maxSegment = 0
-        for segName, _ in pairs(segments) do
+        for segName, _ in ipairs(segments) do
             local segNum = tonumber(string.match(segName, "%d+"))
             if segNum and segNum > maxSegment then
                 maxSegment = segNum
@@ -569,7 +547,7 @@ function updateGreenFrames()
     end
 
     local combined = {}
-    for _, seg in pairs(segments) do
+    for _, seg in ipairs(segments) do
         for _, m in ipairs(seg) do
             table.insert(combined, m)
         end
@@ -593,36 +571,29 @@ end
 function drawDynamicText()
     updateGreenFrames()
     local yPosition = 50
-    local segments = trialsData[currentCharacter] and trialsData[currentCharacter][tostring(selectedBox)]
+    local segments = trialsData.scheme
     if not segments then return end
-    if debugMode then
-        local personalActionAddress = memory.readdword(players[curPlayer] + charOffset[1])
-        gui.text(10, 10, string.format("Player Action Address: %08X", personalActionAddress), "yellow")
-        gui.text(10, 30, string.format("Current Segment: %d", comboSegment), "yellow")
-    end
-    for i = 1, 8 do
-        local seg = segments["segment" .. i]
-        if seg then
-            for _, m in ipairs(seg) do
-                if (not movesData[currentCharacter] or not movesData[currentCharacter][m.move] or not movesData[currentCharacter][m.move].hidden) then
-                    local xOffset = 10
-                    local color = (m.greenFrames > 0) and (debugMode and "yellow" or "green") or "white"
-                    local moveName = m.move
-                    if movesData[currentCharacter] and movesData[currentCharacter][m.move] and movesData[currentCharacter][m.move].name then 
-                        moveName = movesData[currentCharacter][m.move].name
-                    end
-                    gui.text(xOffset, yPosition, moveName, color)
-                    yPosition = yPosition + 10
+
+    -- debug
+    -- local personalActionAddress = memory.readdword(players[curPlayer] + charOffset[1])
+    -- gui.text(10, 10, string.format("Player Action Address: %08X", personalActionAddress), "yellow")
+    -- gui.text(10, 30, string.format("Current Segment: %d", comboSegment), "yellow")
+
+    for _, seg in ipairs(segments) do
+        for _, m in ipairs(seg) do
+            if (not movesData or not movesData[m.move] or not movesData[m.move].hidden) then
+                local xOffset = 10
+                local color = (m.greenFrames > 0) and (debugMode and "yellow" or "green") or "white"
+                local moveName = m.move
+                if movesData and movesData[m.move] and movesData[m.move].name then 
+                    moveName = movesData[m.move].name
                 end
+                gui.text(xOffset, yPosition, moveName, color)
+                yPosition = yPosition + 10
             end
         end
     end
 end
-
-function onSavestateLoad() 
-    resetGreenFrames() 
-end
-savestate.registerload(onSavestateLoad)
 
 function mainLoop()
     handleStartButton()

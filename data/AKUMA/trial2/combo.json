@@ -1,0 +1,29 @@
+{
+    "desc": "light punch in a juggle against a stunned gill\nallows for the next move to restand",
+    "scheme": [
+        [
+          { "move": "JUMP_FORWARD", "greenFrames": 0, "hitDetected": true },
+          { "move": "DIVEKICK", "greenFrames": 0, "hitDetected": false },
+          { "move": "CLOSE_HEAVY_PUNCH", "greenFrames": 0, "hitDetected": false },
+          { "move": "LK_TATSU", "greenFrames": 0, "hitDetected": false }
+        ],
+        [
+          { "move": "JUMP_FORWARD", "greenFrames": 0, "hitDetected": true },
+          { "move": "CLOSE_LIGHT_PUNCH", "greenFrames": 0, "hitDetected": false },
+          { "move": "CROUCHING_HEAVY_PUNCH", "greenFrames": 0, "hitDetected": false },
+          { "move": "LK_TATSU", "greenFrames": 0, "hitDetected": false }
+        ],
+        [
+          { "move": "CLOSE_LIGHT_PUNCH", "greenFrames": 0, "hitDetected": false },
+          { "move": "DIVEKICK", "greenFrames": 0, "hitDetected": false },
+          { "move": "CLOSE_MEDIUM_KICK", "greenFrames": 0, "hitDetected": false },
+          { "move": "LK_TATSU", "greenFrames": 0, "hitDetected": false }
+        ],
+        [
+          { "move": "CLOSE_LIGHT_PUNCH", "greenFrames": 0, "hitDetected": false },
+          { "move": "MP_KARA", "greenFrames": 0, "hitDetected": false },
+          { "move": "RAGING_DEMON", "greenFrames": 0, "hitDetected": false }
+        ],
+        []
+    ]      
+}

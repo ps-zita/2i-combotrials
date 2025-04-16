@@ -1,0 +1,13 @@
+{
+    "desc":"this one is stupid lmao\ntrial by vesper",
+    "scheme":[
+        [
+          { "move": "LIGHT_SHORYUKEN", "greenFrames": 0, "hitDetected": false },
+          { "move": "SHIPPU_JINRAIKYAKU", "greenFrames": 0, "hitDetected": false }
+        ],
+        [
+          { "move": "SHIPPU_JINRAIKYAKU", "greenFrames": 0, "hitDetected": false },
+          { "move": "LIGHT_SHORYUKEN", "greenFrames": 0, "hitDetected": false }
+        ]
+    ]  
+}

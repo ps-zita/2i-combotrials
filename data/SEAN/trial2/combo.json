@@ -1,0 +1,7 @@
+{
+    "desc": "placeholder",
+    "scheme": [
+        { "move": "THROW", "greenFrames": 0, "hitDetected": false },
+        { "move": "HADOU_BURST", "greenFrames": 0, "hitDetected": false, "projectile": true }
+    ]
+}

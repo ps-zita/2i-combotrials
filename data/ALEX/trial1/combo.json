@@ -1,0 +1,14 @@
+{
+    "desc": "placeholder",
+    "scheme": [
+        [
+          { "move": "IDLE", "greenFrames": 1000, "hitDetected": true }
+        ],
+        [
+          { "move": "HEAVY_FLASH_CHOP", "greenFrames": 0, "hitDetected": false },
+          { "move": "MEDIUM_PUNCH", "greenFrames": 0, "hitDetected": false },
+          { "move": "LIGHT_FLASH_CHOP", "greenFrames": 0, "hitDetected": false },
+          { "move": "BOOMERANG_RAID", "greenFrames": 0, "hitDetected": false }
+        ]
+    ]      
+}

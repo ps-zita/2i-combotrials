@@ -1,0 +1,21 @@
+{
+    "desc": "stun adds an extra frame of hitstun, this allows \nyou to do cl.mp > cr.hp and ex tatsu > shippu.\ntrial by vesper",
+    "scheme":[
+        [
+          { "move": "JUMP_FORWARD", "greenFrames": 0, "hitDetected": true },
+          { "move": "JUMPING_MEDIUM_KICK", "greenFrames": 0, "hitDetected": false },
+          { "move": "CLOSE_MEDIUM_PUNCH", "greenFrames": 0, "hitDetected": false },
+          { "move": "CROUCHING_HEAVY_PUNCH", "greenFrames": 0, "hitDetected": false },
+          { "move": "EX_TATSU", "greenFrames": 0, "hitDetected": false },
+          { "move": "EX_SHORYUKEN", "greenFrames": 0, "hitDetected": false }
+        ],
+        [
+          { "move": "JUMP_FORWARD", "greenFrames": 0, "hitDetected": false },
+          { "move": "JUMPING_HEAVY_PUNCH", "greenFrames": 0, "hitDetected": false },
+          { "move": "CLOSE_MEDIUM_PUNCH", "greenFrames": 0, "hitDetected": false },
+          { "move": "CLOSE_HEAVY_PUNCH", "greenFrames": 0, "hitDetected": false },
+          { "move": "EX_TATSU2", "greenFrames": 0, "hitDetected": false },
+          { "move": "SHORYU_REPPA", "greenFrames": 0, "hitDetected": false }
+        ]
+    ]      
+}

@@ -1,0 +1,25 @@
+{
+    "desc": "placeholder",
+    "scheme": [
+        [
+          { "move": "HEAVY_ULTRA_THROW", "greenFrames": 0, "hitDetected": false },
+          { "move": "HEAVY_PALM_BOMBER", "greenFrames": 0, "hitDetected": false }
+        ],
+        [
+          { "move": "HEAVY_PALM_BOMBER", "greenFrames": 0, "hitDetected": false }
+        ],
+        [
+          { "move": "HEAVY_PALM_BOMBER", "greenFrames": 0, "hitDetected": false }
+        ],
+        [
+          { "move": "HEAVY_PALM_BOMBER", "greenFrames": 0, "hitDetected": false }
+        ],
+        [
+          { "move": "HEAVY_PALM_BOMBER", "greenFrames": 0, "hitDetected": false }
+        ],
+        [
+          { "move": "MEGATON_PRESS", "greenFrames": 0, "hitDetected": false },
+          { "move": "MOONSAULT_PRESS", "greenFrames": 0, "hitDetected": false }
+        ]
+    ]      
+}

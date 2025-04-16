@@ -1,0 +1,13 @@
+{
+    "desc": "placeholder",
+    "scheme": [
+        [
+          { "move": "TAUNT", "greenFrames": 0, "hitDetected": false, "projectile": true },
+          { "move": "CLOSE_HEAVY_KICK", "greenFrames": 0, "hitDetected": false }
+        ],
+        [
+          { "move": "CROUCHING_MEDIUM_KICK", "greenFrames": 0, "hitDetected": false },
+          { "move": "HADOU_BURST", "greenFrames": 0, "hitDetected": false, "projectile": true }
+        ]
+    ]  
+}

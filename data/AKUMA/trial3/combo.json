@@ -1,0 +1,12 @@
+{
+    "desc": "test trial fur sata :)",
+    "scheme":[
+        [
+            { "move": "JUMP_FORWARD", "greenFrames": 0, "hitDetected": false },
+            { "move": "TEST_CHOP", "greenFrames": 0, "hitDetected": false }
+        ],
+        [
+            { "move": "TEST_CHOP", "greenFrames": 0, "hitDetected": false }
+        ]
+    ]          
+}
