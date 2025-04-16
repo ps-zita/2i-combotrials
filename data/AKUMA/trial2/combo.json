@@ -24,6 +24,8 @@
           { "move": "MP_KARA", "greenFrames": 0, "hitDetected": false },
           { "move": "RAGING_DEMON", "greenFrames": 0, "hitDetected": false }
         ],
-        []
+        [
+          { "move": "JUMP_FORWARD", "greenFrames": 0, "hitDetected": true }
+        ]
     ]      
 }
