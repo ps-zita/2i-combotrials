@@ -209,8 +209,8 @@ function resetGreenFrames()
   
     -- Reset each move in the current trial's scheme, if it exists.
     if trialsData and trialsData.scheme then
-        for segmentIndex, segment in ipairs(trialsData.scheme) do
-            for moveIndex, move in ipairs(segment) do
+        for _, segment in ipairs(trialsData.scheme) do
+            for _, move in ipairs(segment) do
                 move.greenFrames = 0      -- Clear the green frame timer
                 move.hitDetected = false  -- Reset hit detection flag
                 if move.projectile then
@@ -335,14 +335,12 @@ function handleMenuInput()
         selectedChar = (selectedChar - 1) ~= 0 and selectedChar - 1 or #CHARACTERS
         trialCount = SAVE[CHARACTERS[selectedChar]].trialCount
         selectedBox = math.min(selectedBox, trialCount)
-        if selectedChar < 1 then selectedChar = #CHARACTERS end
         print("Selected character: " .. CHARACTERS[selectedChar])
     elseif inputs["P1 Right"] and not guiinputs.P1.previousinputs["P1 Right"] then
         selectedBox = selectedBox % trialCount + 1
         print("Selected trial: " .. selectedBox)
     elseif inputs["P1 Left"] and not guiinputs.P1.previousinputs["P1 Left"] then
-        selectedBox = selectedBox - 1
-        if selectedBox < 1 then selectedBox = trialCount end
+        selectedBox = (selectedBox > 1) and selectedBox - 1 or trialCount
         print("Selected trial: " .. selectedBox)
     end
     for i = 1, 9 do
