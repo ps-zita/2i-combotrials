@@ -1,5 +1,4 @@
 -- Libraries
-local bit = require("bit")
 local json = require("dkjson")  -- JSON parsing library
 
 local movesData = {}
@@ -329,10 +328,12 @@ function handleMenuInput()
     local trialCount = SAVE[CHARACTERS[selectedChar]].trialCount
     if inputs["P1 Down"] and not guiinputs.P1.previousinputs["P1 Down"] then
         selectedChar = selectedChar % #CHARACTERS + 1
+        trialCount = SAVE[CHARACTERS[selectedChar]].trialCount
         selectedBox = math.min(selectedBox, trialCount)
         print("Selected character: " .. CHARACTERS[selectedChar])
     elseif inputs["P1 Up"] and not guiinputs.P1.previousinputs["P1 Up"] then
-        selectedChar = selectedChar - 1
+        selectedChar = (selectedChar - 1) ~= 0 and selectedChar - 1 or #CHARACTERS
+        trialCount = SAVE[CHARACTERS[selectedChar]].trialCount
         selectedBox = math.min(selectedBox, trialCount)
         if selectedChar < 1 then selectedChar = #CHARACTERS end
         print("Selected character: " .. CHARACTERS[selectedChar])
