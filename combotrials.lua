@@ -8,7 +8,8 @@ local json = require("dkjson")
 -- data pulled from directories
 local movesData = {}
 local trialsData = {}
-local characters = {}
+CHARACTERS = {}
+SAVE = {}
 
 -- Define globals used for hit detection
 local comboSegment = 1
@@ -61,8 +62,6 @@ COLORS = {
     debug = "yellow"
 }
 
-SAVE = {}
-
 
 
 -- INIT & TOOLS
@@ -84,23 +83,55 @@ local function loadJSONFile(path)
     end
 end
 
-local function createSave()
-    local temp = assert(io.open("./save.json", "w"))
-    local data = {}
+local function saveTrial(character, index)
+    local file = assert(io.open("./save.json", "w"))
+    SAVE[character].trialStatus[index] = true
+    file:write(json.encode(SAVE, { indent = true }))
+    file:close()
+end
 
-    
+local function createSave()
+    local file = assert(io.open("./save.json", "w")) -- create file
+    SAVE = {}
+
+    for _, char in ipairs(CHARACTERS) do
+        local object = {} -- create object
+
+        -- init object attributes
+        object.name = char
+        object.trialCount = getTrialCount(char)
+        object.trialStatus = {}
+        for i = 1, object.trialCount do
+            object.trialStatus[i] = false
+        end
+
+        SAVE[char] = object -- add to save
+    end
+
+    file:write(json.encode(SAVE, { indent = true })) -- save to file
+    file:close()
 end
 
 local function init()
+    -- getting / creating saves
     SAVE = loadJSONFile("./save.json")
 
     if SAVE == nil then
+        -- get char directories
+        for dir in io.popen([[dir ".\data" /b]]):lines() do 
+            table.insert(CHARACTERS, dir)
+        end
+
         createSave()
+
+        return
+    end
+
+    for _, char in pairs(SAVE) do
+        print(char.name)
+        table.insert(CHARACTERS, char.name)
     end
 end
-
-init()
-
 
 
 -- LOADING CHARACTER DATA --
@@ -125,11 +156,6 @@ function getTrialCount(char)
     end
 
     return count
-end
-
--- getting char directories
-for dir in io.popen([[dir ".\data" /b]]):lines() do 
-    table.insert(characters, dir)
 end
 
 -- Modified loadCharacterTrial now loads savestates from the "states" folder.
@@ -192,9 +218,10 @@ end
 
 
 
+
 -- Fixed savedata functions using string representation
 local function getSaveDataLength()
-    return #characters * 10
+    return #CHARACTERS * 10
 end
 
 function pullSave()
@@ -236,7 +263,7 @@ function toBinaryIndex(charIndex, trialIndex)
 end
 
 function toCharIndex(findchar)
-    for index, char in ipairs(characters) do
+    for index, char in ipairs(CHARACTERS) do
         if char == findchar then
             return index
         end
@@ -269,19 +296,19 @@ function drawTrialBoxes(x, y, charIndex)
     local boxHeight = 5
     local spacing = 2
     local startX = x + 35
-    local data = pullSave()
-    local trialCount = getTrialCount(characters[charIndex])
+    local data = SAVE[CHARACTERS[charIndex]]
+    local trialCount = data.trialCount
 
     for i = 1, trialCount do
         local boxX = startX + ((boxWidth + spacing) * (i - 1))
         local isSelected = (charIndex == selectedChar) and (i == selectedBox)
-        local isCompleted = readTrialStatus(data, charIndex, i)
+        local isCompleted = data.trialStatus[i]
         drawBox(boxX, y, boxWidth, boxHeight, isSelected, isCompleted)
     end
 end
 
 function drawTrialExplanation()
-    local char = characters[selectedChar]
+    local char = CHARACTERS[selectedChar]
     local desc = getTrial(char, selectedBox).desc
 
     if desc then
@@ -298,8 +325,8 @@ function drawCharacterPanel()
     local panelWidth = 120
     local panelX = emu.screenwidth() - panelWidth - 5
     local itemHeight = 10
-    drawBox(panelX, 5, panelWidth, (#characters * itemHeight) + 10)
-    for i, char in ipairs(characters) do
+    drawBox(panelX, 5, panelWidth, (#CHARACTERS * itemHeight) + 10)
+    for i, char in ipairs(CHARACTERS) do
         local y = 10 + ((i - 1) * itemHeight)
         local color = (i == selectedChar) and COLORS.highlight or COLORS.text
         drawText(panelX + 5, y, char, color)
@@ -347,19 +374,22 @@ end
 
 function handleMenuInput()
     local inputs = joypad.get()
+    local trialCount = SAVE[CHARACTERS[selectedChar]].trialCount
     if inputs["P1 Down"] and not guiinputs.P1.previousinputs["P1 Down"] then
-        selectedChar = selectedChar % #characters + 1
-        print("Selected: " .. characters[selectedChar])
+        selectedChar = selectedChar % #CHARACTERS + 1
+        selectedBox = math.min(selectedBox, trialCount)
+        print("Selected: " .. CHARACTERS[selectedChar])
     elseif inputs["P1 Up"] and not guiinputs.P1.previousinputs["P1 Up"] then
         selectedChar = selectedChar - 1
-        if selectedChar < 1 then selectedChar = #characters end
-        print("Selected: " .. characters[selectedChar])
+        selectedBox = math.min(selectedBox, trialCount)
+        if selectedChar < 1 then selectedChar = #CHARACTERS end
+        print("Selected: " .. CHARACTERS[selectedChar])
     elseif inputs["P1 Right"] and not guiinputs.P1.previousinputs["P1 Right"] then
-        selectedBox = selectedBox % 10 + 1
+        selectedBox = selectedBox % trialCount + 1
         print("Trial " .. selectedBox)
     elseif inputs["P1 Left"] and not guiinputs.P1.previousinputs["P1 Left"] then
         selectedBox = selectedBox - 1
-        if selectedBox < 1 then selectedBox = 10 end
+        if selectedBox < 1 then selectedBox = trialCount end
         print("Trial " .. selectedBox)
     end
     for i = 1, 9 do
@@ -369,16 +399,16 @@ function handleMenuInput()
                 debugMode = not debugMode
                 print("Debug Mode: " .. (debugMode and "ON" or "OFF"))
             else
-                local message = button .. " pressed for " .. characters[selectedChar] .. " trial " .. selectedBox
+                local message = button .. " pressed for " .. CHARACTERS[selectedChar] .. " trial " .. selectedBox
                 print(message)
                 print(message)
-                loadCharacterTrial(characters[selectedChar], selectedBox)
+                loadCharacterTrial(CHARACTERS[selectedChar], selectedBox)
                 gui.transparency(100)
                 break
             end
         end
     end
-    for k, v in ipairs(inputs) do
+    for k, v in pairs(inputs) do
         guiinputs.P1.previousinputs[k] = v
     end
 end
@@ -395,7 +425,7 @@ function handleStartButton()
         end
     else
         if startHoldFrames > 0 and startHoldFrames < START_HOLD_THRESHOLD and savestateLoaded then
-            loadCharacterTrial(characters[selectedChar], selectedBox)
+            loadCharacterTrial(CHARACTERS[selectedChar], selectedBox)
         end
         startHoldFrames = 0
     end
@@ -532,7 +562,9 @@ function updateGreenFrames()
             comboCompleted = true
             isStunned = false
             comboSegment = 1
-            writeTrialCompletion(currentCharacter, selectedBox)
+
+            saveTrial(currentCharacter, selectedBox)
+            -- writeTrialCompletion(currentCharacter, selectedBox)
         else
             comboSegment = comboSegment + 1
             isStunned = true
@@ -618,6 +650,8 @@ function mainLoop()
         joypad.set({ ["P2 Up"] = true }, 2)
     end
 end
+
+init()
 
 while true do
     mainLoop()
