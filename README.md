@@ -1,6 +1,6 @@
 # SF3 Second Impact - Combo Trials
 
-This is a trial combo mod for SF3 Second Impact. Follow the instructions below to download and run the trial.
+This is a combo trial mod for SF3 Second Impact. Follow the instructions below to download and run the trial.
 
 ## How to use
 
